@@ -180,6 +180,18 @@ db.prepare(`
   )
 `).run();
 
+// history of completed cards
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS completed_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    guild_id TEXT,
+    user_id TEXT,
+    card_id TEXT,
+    card_number INTEGER,
+    completed_at INTEGER
+  )
+`).run();
+
 const getCountStmt = db.prepare(
   "SELECT count FROM stamps WHERE guild_id=? AND user_id=? AND card_id=?"
 );
@@ -204,6 +216,31 @@ const leaderboardStmt = db.prepare(`
 `);
 
 const resetGuildStmt = db.prepare("DELETE FROM stamps WHERE guild_id=?");
+
+// completed cards history
+const insertCompletedStmt = db.prepare(`
+  INSERT INTO completed_cards (guild_id, user_id, card_id, card_number, completed_at)
+  VALUES (?, ?, ?, ?, ?)
+`);
+
+const countCompletedStmt = db.prepare(
+  "SELECT COUNT(*) as total FROM completed_cards WHERE guild_id=? AND user_id=?"
+);
+
+const getHistoryStmt = db.prepare(`
+  SELECT card_id, card_number, completed_at
+  FROM completed_cards
+  WHERE guild_id=? AND user_id=?
+  ORDER BY completed_at DESC
+`);
+
+const resetCompletedStmt = db.prepare(
+  "DELETE FROM completed_cards WHERE guild_id=? AND user_id=?"
+);
+
+const resetAllCompletedStmt = db.prepare(
+  "DELETE FROM completed_cards WHERE guild_id=?"
+);
 
 const getCardStmt = db.prepare(
   "SELECT card_id FROM user_cards WHERE guild_id=? AND user_id=?"
@@ -245,13 +282,16 @@ const commands = [
     .addSubcommand((s) =>
       s
         .setName("setcard")
-        .setDescription("Choose which stamp card design you use")
+        .setDescription("Choose a stamp card design (managers can set for other users too)")
         .addStringOption((o) =>
           o
             .setName("card")
             .setDescription("Which card design?")
             .setRequired(true)
             .addChoices(...CARD_CHOICES)
+        )
+        .addUserOption((o) =>
+          o.setName("user").setDescription("Set card for this user (managers only)")
         )
     )
 
@@ -280,6 +320,13 @@ const commands = [
         .setName("reset")
         .setDescription("Reset a user’s stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
+    )
+
+    .addSubcommand((s) =>
+      s
+        .setName("history")
+        .setDescription("View completed stamp card history")
+        .addUserOption((o) => o.setName("user").setDescription("User (optional)"))
     )
 
     .addSubcommand((s) =>
@@ -366,19 +413,18 @@ async function logStampWithImage({ interaction, targetUser, cardId, action, coun
   });
 }
 
-async function postCompletedWithImage({ interaction, targetUser, cardId, count }) {
+async function postCompletedWithImage({ interaction, targetUser, cardId, count, cardNumber }) {
   if (!STAMP_COMPLETED_CHANNEL_ID) return;
 
   const buffer = await renderStampCard(cardId, count);
 
   await sendToChannel(STAMP_COMPLETED_CHANNEL_ID, {
     content:
-      `🎉 **STAMP CARD COMPLETED!** 🎉\n` +
-      `👑 **Member:** ${targetUser} \n` +
-      `🪪 **Card:** **${STAMP_CARDS[cardId].name}**\n` +
-      `✅ **Total:** **${count}/${STAMP_GOAL}**\n` +
-      `🛡️ **Verified by:** ${interaction.user}\n` +
-      `⏰ <t:${Math.floor(Date.now() / 1000)}:F>`,
+      `<a:8720rainbowconfetti:1488749313130762383> **Stamp Card Completed!** <a:8720rainbowconfetti:1488749313130762383>\n` +
+      `<a:2313purplecrown:1488749776571863091> **Member:** ${targetUser}\n` +
+      `<a:5707lightpurplecheck:1488750465804926976> **Total:** **${count}/${STAMP_GOAL}**\n` +
+      `<:518169rolemodpurple:1488750784785940663> **Verified By:** ${interaction.user}\n` +
+      `<:18953bulletpoint:1488751383027912797> <t:${Math.floor(Date.now() / 1000)}:F>`,
     files: [{ attachment: buffer, name: "completed-stamp-card.png" }],
     allowedMentions: { users: [], roles: [] },
   });
@@ -436,7 +482,19 @@ client.on("interactionCreate", async (interaction) => {
 
     // ===== LEADERBOARD =====
 if (sub === "leaderboard") {
-  const rows = leaderboardStmt.all(guildId, 10);
+  const rows = db.prepare(`
+    SELECT user_id,
+      COALESCE((SELECT SUM(count) FROM stamps WHERE guild_id=s.guild_id AND user_id=s.user_id), 0) as current_stamps,
+      COALESCE((SELECT COUNT(*) FROM completed_cards WHERE guild_id=s.guild_id AND user_id=s.user_id), 0) as cards_completed
+    FROM (
+      SELECT DISTINCT guild_id, user_id FROM stamps WHERE guild_id=?
+      UNION
+      SELECT DISTINCT guild_id, user_id FROM completed_cards WHERE guild_id=?
+    ) s
+    WHERE guild_id = ?
+    ORDER BY cards_completed DESC, current_stamps DESC
+    LIMIT ?
+  `).all(guildId, guildId, guildId, 10);
 
   if (!rows.length) {
     return interaction.reply({
@@ -455,19 +513,45 @@ if (sub === "leaderboard") {
 
     if (!member) continue;
 
-    const cardName = STAMP_CARDS[row.card_id]?.name || "Unknown Card";
-
+    const completedText = row.cards_completed > 0 ? ` | 🏅 **${row.cards_completed}** card(s) completed` : "";
     lines.push(
-      `**${rank}.** 👑 ${member.user.username} — **${row.count}/${STAMP_GOAL}** (${cardName})`
+      `**${rank}.** ${member.user.username} — **${row.current_stamps}/${STAMP_GOAL}**${completedText}`
     );
 
     rank++;
   }
 
   return interaction.reply({
+    content: `<a:962876purplehangingstars:1488748253489926287> **STAMP LEADER BOARD** <a:962876purplehangingstars:1488748253489926287>\n\n` + lines.join("\n"),
+    allowedMentions: { users: [] },
+  });
+}
+
+// ===== HISTORY =====
+if (sub === "history") {
+  const user = interaction.options.getUser("user") || interaction.user;
+  const rows = getHistoryStmt.all(guildId, user.id);
+  const { total } = countCompletedStmt.get(guildId, user.id);
+
+  if (!rows.length) {
+    return interaction.reply({
+      content: `📭 **${user.username}** hasn't completed any stamp cards yet.`,
+      ephemeral: true,
+    });
+  }
+
+  const lines = rows.map((r) => {
+    const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
+    const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
+    return `🏅 **Card #${r.card_number}** — ${cardName} — completed ${date}`;
+  });
+
+  return interaction.reply({
     content:
-      `🏆 **STAMP LEADERBOARD** 🏆\n\n` +
+      `📜 **Stamp Card History for ${user.username}**\n` +
+      `🃏 Total cards completed: **${total}**\n\n` +
       lines.join("\n"),
+    ephemeral: false,
     allowedMentions: { users: [] },
   });
 }
@@ -475,13 +559,29 @@ if (sub === "leaderboard") {
 // ===== SETCARD =====
     if (sub === "setcard") {
       const cardId = interaction.options.getString("card", true);
+      const targetUser = interaction.options.getUser("user");
 
       if (!STAMP_CARDS[cardId]) {
         return interaction.reply({ content: "❌ Unknown card choice.", ephemeral: true });
       }
 
-      setCardStmt.run(guildId, interaction.user.id, cardId);
+      // Setting another user's card requires manager perms
+      if (targetUser && targetUser.id !== interaction.user.id) {
+        if (!canManage(interaction)) {
+          return interaction.reply({
+            content: "❌ You don't have permission to set another member's card.",
+            ephemeral: true,
+          });
+        }
+        setCardStmt.run(guildId, targetUser.id, cardId);
+        return interaction.reply({
+          content: `✅ **${targetUser.username}'s** stamp card has been set to **${STAMP_CARDS[cardId].name}**.`,
+          ephemeral: false,
+        });
+      }
 
+      // Setting own card
+      setCardStmt.run(guildId, interaction.user.id, cardId);
       return interaction.reply({
         content: `✅ Saved! Your stamp card is now **${STAMP_CARDS[cardId].name}**.`,
         ephemeral: true,
@@ -528,6 +628,7 @@ if (sub === "resetall") {
   }
 
   resetGuildStmt.run(guildId);
+  resetAllCompletedStmt.run(guildId);
 
   // 🔹 LOG IT
   await logResetAll({ interaction });
@@ -579,6 +680,18 @@ if (sub === "resetall") {
         const current = row?.count || 0;
 
         deleteStmt.run(guildId, targetUser.id, cardId);
+        resetCompletedStmt.run(guildId, targetUser.id);
+
+        // Optionally switch to a new card design
+        const newCardId = interaction.options.getString("card");
+        if (newCardId && STAMP_CARDS[newCardId]) {
+          setCardStmt.run(guildId, targetUser.id, newCardId);
+        }
+
+        const activeCardId = newCardId && STAMP_CARDS[newCardId] ? newCardId : cardId;
+        const cardSwitchNote = newCardId && STAMP_CARDS[newCardId]
+          ? ` Their card has been switched to **${STAMP_CARDS[newCardId].name}**.`
+          : "";
 
         // remove reward role if present
         if (targetMember.roles.cache.has(REWARD_ROLE_ID)) {
@@ -589,13 +702,13 @@ if (sub === "resetall") {
         await logStampWithImage({
           interaction,
           targetUser,
-          cardId,
-          action: `♻️ Reset (was ${current})`,
+          cardId: activeCardId,
+          action: `♻️ Reset (was ${current})${newCardId && STAMP_CARDS[newCardId] ? ` → switched to ${STAMP_CARDS[newCardId].name}` : ""}`,
           count: 0,
         });
 
         return interaction.reply(
-          `♻️ Reset complete. ${targetUser.username} is now **0/${STAMP_GOAL}** on **${STAMP_CARDS[cardId].name}**.`
+          `♻️ Reset complete. ${targetUser.username} is now **0/${STAMP_GOAL}** on **${STAMP_CARDS[activeCardId].name}**.${cardSwitchNote}`
         );
       }
 
@@ -611,12 +724,40 @@ if (sub === "resetall") {
 
       // completed post ONLY when crossing goal upward
       if (sub === "add" && current < STAMP_GOAL && next >= STAMP_GOAL) {
+        // Archive this completed card to history
+        const { total: prevTotal } = countCompletedStmt.get(guildId, targetUser.id);
+        const cardNumber = prevTotal + 1;
+        insertCompletedStmt.run(guildId, targetUser.id, cardId, cardNumber, Date.now());
+
+        // Post completion announcement
         await postCompletedWithImage({
           interaction,
           targetUser,
           cardId,
           count: next,
+          cardNumber,
         });
+
+        // Reset current card so they can start a new one
+        deleteStmt.run(guildId, targetUser.id, cardId);
+
+        // Give reward role
+        if (!targetMember.roles.cache.has(REWARD_ROLE_ID)) {
+          await targetMember.roles.add(REWARD_ROLE_ID).catch(() => {});
+        }
+
+        await logStampWithImage({
+          interaction,
+          targetUser,
+          cardId,
+          action: `🏅 Card #${cardNumber} COMPLETED & reset for next card`,
+          count: next,
+        });
+
+        return interaction.reply(
+          `🎉 **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! 🏅\n` +
+          `Their card has been reset — they can start collecting again, or use \`/stamp setcard\` to switch to a different card design!`
+        );
       }
 
       // reward role logic
