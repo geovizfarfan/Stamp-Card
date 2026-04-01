@@ -321,7 +321,7 @@ async function logStampWithImage({ interaction, targetUser, cardId, action, coun
   const buffer = await renderStampCard(cardId, count);
   await sendToChannel(STAMP_LOG_CHANNEL_ID, {
     content:
-      `<:receipts:1488760952924143616> **Stamp Transcript**\n` +
+      `## <:receipts:1488760952924143616> Stamp Transcript\n` +
       `<:BULLET:1488760457073524947> **Member:** ${targetUser}\n` +
       `<:BULLET:1488760457073524947> **Action:** ${action}\n` +
       `<:BULLET:1488760457073524947> **Card:** **${STAMP_CARDS[cardId].name}**\n` +
@@ -338,7 +338,7 @@ async function postCompletedWithImage({ interaction, targetUser, cardId, count, 
   const buffer = await renderStampCard(cardId, count);
   await sendToChannel(STAMP_COMPLETED_CHANNEL_ID, {
     content:
-      `<a:8720rainbowconfetti:1488749313130762383> **STAMP CARD COMPLETED!** <a:8720rainbowconfetti:1488749313130762383>\n` +
+      `## <a:8720rainbowconfetti:1488749313130762383> STAMP CARD COMPLETED! <a:8720rainbowconfetti:1488749313130762383>\n` +
       `<a:2313purplecrown:1488749776571863091> **Member:** ${targetUser}\n` +
       `<a:5707lightpurplecheck:1488750465804926976> **Total:** **${count}/${STAMP_GOAL}**\n` +
       `<:518169rolemodpurple:1488750784785940663> **Verified By:** ${interaction.user}\n` +
@@ -352,7 +352,7 @@ async function logResetAll({ interaction }) {
   if (!STAMP_LOG_CHANNEL_ID) return;
   await sendToChannel(STAMP_LOG_CHANNEL_ID, {
     content:
-      `<:receipts:1488760952924143616> **Stamp System Reset (ALL)**\n` +
+      `## <:receipts:1488760952924143616> Stamp System Reset (ALL)\n` +
       `<:BULLET:1488760457073524947> **Action:** RESET ALL\n` +
       `<:BULLET:1488760457073524947> **By:** ${interaction.user}\n` +
       `<:BULLET:1488760457073524947> **Server:** ${interaction.guild.name}\n` +
@@ -399,12 +399,12 @@ client.on("interactionCreate", async (interaction) => {
       for (const row of rows) {
         const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
         if (!member) continue;
-        const completedText = row.cards_completed > 0 ? ` | 🏅 **${row.cards_completed}** card(s) completed` : "";
+        const completedText = row.cards_completed > 0 ? `\n<:70038namedaltop:1489043799307980893> **${row.cards_completed}** card(s) completed` : "";
         lines.push(`**${rank}.** ${member.user.username} — **${row.current_stamps}/${STAMP_GOAL}**${completedText}`);
         rank++;
       }
       return interaction.reply({
-        content: `<a:962876purplehangingstars:1488748253489926287> **STAMP LEADER BOARD** <a:962876purplehangingstars:1488748253489926287>\n\n` + lines.join("\n"),
+        content: `## <a:962876purplehangingstars:1488748253489926287> STAMP LEADER BOARD <a:962876purplehangingstars:1488748253489926287>\n\n` + lines.join("\n\n"),
         allowedMentions: { users: [] },
       });
     }
@@ -423,7 +423,7 @@ client.on("interactionCreate", async (interaction) => {
         return `🏅 **Card #${r.card_number}** — ${cardName} — completed ${date}`;
       });
       return interaction.reply({
-        content: `📜 **Stamp Card History for ${user.username}**\n🃏 Total cards completed: **${total}**\n\n` + lines.join("\n"),
+        content: `## 📜 Stamp Card History for ${user.username}\n🃏 Total cards completed: **${total}**\n\n` + lines.join("\n"),
         ephemeral: false,
         allowedMentions: { users: [] },
       });
