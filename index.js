@@ -401,7 +401,8 @@ async function logStampWithImage({ interaction, targetUser, cardId, action, coun
 
   await sendToChannel(STAMP_LOG_CHANNEL_ID, {
     content:
-      `<:receipts:1488760952924143616> **Stamp Transcript** <:BULLET:1488760457073524947> **Member:** ${targetUser}\n` +
+      `<:receipts:1488760952924143616> **Stamp Transcript**\n` +
+      `<:BULLET:1488760457073524947> **Member:** ${targetUser}\n` +
       `<:BULLET:1488760457073524947> **Action:** ${action}\n` +
       `<:BULLET:1488760457073524947> **Card:** **${STAMP_CARDS[cardId].name}**\n` +
       `<:BULLET:1488760457073524947> **Total:** **${count}/${STAMP_GOAL}**\n` +
