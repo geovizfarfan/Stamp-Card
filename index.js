@@ -401,13 +401,12 @@ async function logStampWithImage({ interaction, targetUser, cardId, action, coun
 
   await sendToChannel(STAMP_LOG_CHANNEL_ID, {
     content:
-      `🧾 **Stamp Transcript**\n` +
-      `• **Member:** ${targetUser} \n` +
-      `• **Action:** ${action}\n` +
-      `• **Card:** **${STAMP_CARDS[cardId].name}**\n` +
-      `• **Total:** **${count}/${STAMP_GOAL}**\n` +
-      `• **By:** ${interaction.user} \n` +
-      `• **When:** <t:${Math.floor(Date.now() / 1000)}:F>`,
+      `<:receipts:1488760952924143616> **Stamp Transcript** <:BULLET:1488760457073524947> **Member:** ${targetUser}\n` +
+      `<:BULLET:1488760457073524947> **Action:** ${action}\n` +
+      `<:BULLET:1488760457073524947> **Card:** **${STAMP_CARDS[cardId].name}**\n` +
+      `<:BULLET:1488760457073524947> **Total:** **${count}/${STAMP_GOAL}**\n` +
+      `<:BULLET:1488760457073524947> **By:** ${interaction.user}\n` +
+      `<:BULLET:1488760457073524947> **When:** <t:${Math.floor(Date.now() / 1000)}:F>`,
     files: [{ attachment: buffer, name: "stamp-card.png" }],
     allowedMentions: { users: [], roles: [] },
   });
@@ -420,7 +419,7 @@ async function postCompletedWithImage({ interaction, targetUser, cardId, count, 
 
   await sendToChannel(STAMP_COMPLETED_CHANNEL_ID, {
     content:
-      `<a:8720rainbowconfetti:1488749313130762383> **Stamp Card Completed!** <a:8720rainbowconfetti:1488749313130762383>\n` +
+      `<a:8720rainbowconfetti:1488749313130762383> **STAMP CARD COMPLETED!** <a:8720rainbowconfetti:1488749313130762383>\n` +
       `<a:2313purplecrown:1488749776571863091> **Member:** ${targetUser}\n` +
       `<a:5707lightpurplecheck:1488750465804926976> **Total:** **${count}/${STAMP_GOAL}**\n` +
       `<:518169rolemodpurple:1488750784785940663> **Verified By:** ${interaction.user}\n` +
