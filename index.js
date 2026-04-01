@@ -576,3 +576,4 @@ client.on("interactionCreate", async (interaction) => {
 // START
 // =====================
 initDB().then(() => client.login(TOKEN));
+
