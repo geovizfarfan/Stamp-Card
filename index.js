@@ -475,26 +475,36 @@ client.on("interactionCreate", async (interaction) => {
 
       await interaction.deferReply();
 
-      const files = [];
-      const lines = [];
+      const savedStamp = await getCard(guildId, user.id);
+      const stampId = savedStamp?.stamp_id || 'staff_default';
 
-      for (const r of rows) {
+      // Send summary first
+      const lines = rows.map((r) => {
         const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
         const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
         const claimStatus = r.claimed ? `✅ **Claimed**` : `⏳ **Unclaimed**`;
-        const savedStamp = await getCard(guildId, user.id);
-        const stampId = savedStamp?.stamp_id || 'staff_default';
-        const buffer = await renderStampCard(r.card_id, 10, stampId);
-        const filename = `card_${r.card_number}.png`;
-        files.push({ attachment: buffer, name: filename });
-        lines.push(`🏅 **Card #${r.card_number}** — ${cardName} — ${date} — ${claimStatus}`);
-      }
+        return `🏅 **Card #${r.card_number}** — ${cardName} — ${date} — ${claimStatus}`;
+      });
 
-      return interaction.editReply({
+      await interaction.editReply({
         content: `## 📜 Stamp Card History for ${user.username}\n🃏 Total cards completed: **${total}**\n\n` + lines.join("\n"),
-        files,
         allowedMentions: { users: [] },
       });
+
+      // Send each card image as a follow-up
+      for (const r of rows) {
+        const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
+        const claimStatus = r.claimed ? `✅ Claimed` : `⏳ Unclaimed`;
+        if (!STAMP_CARDS[r.card_id]) continue;
+        const buffer = await renderStampCard(r.card_id, 10, stampId);
+        await interaction.followUp({
+          content: `🏅 **Card #${r.card_number}** — ${cardName} — ${claimStatus}`,
+          files: [{ attachment: buffer, name: `card_${r.card_number}.png` }],
+          allowedMentions: { users: [] },
+        });
+      }
+
+      return;
     }
 
     // ===== CLAIM =====
