@@ -138,15 +138,25 @@ async function initDB() {
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_cards (
-      guild_id TEXT, user_id TEXT, card_id TEXT,
+      guild_id TEXT, user_id TEXT, card_id TEXT, stamp_id TEXT,
       PRIMARY KEY (guild_id, user_id)
     )
+  `);
+  // Add stamp_id column if it doesn't exist yet
+  await pool.query(`
+    ALTER TABLE user_cards ADD COLUMN IF NOT EXISTS stamp_id TEXT
   `);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS completed_cards (
       id SERIAL PRIMARY KEY,
       guild_id TEXT, user_id TEXT, card_id TEXT,
       card_number INTEGER, completed_at BIGINT
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS staff_stamps (
+      guild_id TEXT, user_id TEXT, stamp_id TEXT,
+      PRIMARY KEY (guild_id, user_id)
     )
   `);
   console.log("✅ Database tables ready.");
@@ -170,8 +180,8 @@ async function deleteCount(guildId, userId, cardId) {
   await pool.query("DELETE FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3", [guildId, userId, cardId]);
 }
 async function getCard(guildId, userId) {
-  const res = await pool.query("SELECT card_id FROM user_cards WHERE guild_id=$1 AND user_id=$2", [guildId, userId]);
-  return res.rows[0]?.card_id || null;
+  const res = await pool.query("SELECT card_id, stamp_id FROM user_cards WHERE guild_id=$1 AND user_id=$2", [guildId, userId]);
+  return res.rows[0] || null;
 }
 async function setCard(guildId, userId, cardId) {
   await pool.query(
@@ -180,6 +190,30 @@ async function setCard(guildId, userId, cardId) {
     [guildId, userId, cardId]
   );
 }
+async function setStamp(guildId, userId, stampId) {
+  await pool.query(
+    `INSERT INTO user_cards (guild_id, user_id, card_id, stamp_id) VALUES ($1,$2,'og',$3)
+     ON CONFLICT (guild_id, user_id) DO UPDATE SET stamp_id=EXCLUDED.stamp_id`,
+    [guildId, userId, stampId]
+  );
+}
+
+async function getStaffStamp(guildId, userId) {
+  const res = await pool.query(
+    'SELECT stamp_id FROM staff_stamps WHERE guild_id=$1 AND user_id=$2',
+    [guildId, userId]
+  );
+  return res.rows[0]?.stamp_id || 'staff_default';
+}
+
+async function setStaffStamp(guildId, userId, stampId) {
+  await pool.query(
+    `INSERT INTO staff_stamps (guild_id, user_id, stamp_id) VALUES ($1,$2,$3)
+     ON CONFLICT (guild_id, user_id) DO UPDATE SET stamp_id=EXCLUDED.stamp_id`,
+    [guildId, userId, stampId]
+  );
+}
+
 async function countCompleted(guildId, userId) {
   const res = await pool.query("SELECT COUNT(*) as total FROM completed_cards WHERE guild_id=$1 AND user_id=$2", [guildId, userId]);
   return parseInt(res.rows[0].total, 10);
@@ -256,7 +290,7 @@ const commands = [
       s.setName("add").setDescription("Add stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
         .addStringOption((o) =>
-          o.setName("design").setDescription("Which stamp to use?").setRequired(true).addChoices(...STAMP_CHOICES)
+          o.setName("design").setDescription("Override your saved stamp for this action (optional)").addChoices(...STAMP_CHOICES)
         )
         .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setMinValue(1))
     )
@@ -270,6 +304,12 @@ const commands = [
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
         .addStringOption((o) =>
           o.setName("card").setDescription("Switch to a new card design after reset (optional)").addChoices(...CARD_CHOICES)
+        )
+    )
+    .addSubcommand((s) =>
+      s.setName("setstamp").setDescription("Set your preferred stamp design (managers only)")
+        .addStringOption((o) =>
+          o.setName("design").setDescription("Which stamp?").setRequired(true).addChoices(...STAMP_CHOICES)
         )
     )
     .addSubcommand((s) =>
@@ -430,6 +470,20 @@ client.on("interactionCreate", async (interaction) => {
       });
     }
 
+    // ===== SETSTAMP =====
+    if (sub === "setstamp") {
+      if (!canManage(interaction)) {
+        return interaction.reply({ content: "❌ Only managers can set a stamp preference.", ephemeral: true });
+      }
+      const stampId = interaction.options.getString("design", true);
+      if (!STAMPS[stampId]) return interaction.reply({ content: "❌ Unknown stamp.", ephemeral: true });
+      await setStaffStamp(guildId, interaction.user.id, stampId);
+      return interaction.reply({
+        content: `✅ Your preferred stamp is now **${STAMPS[stampId].name}**. It will be used automatically when you add stamps.`,
+        ephemeral: true,
+      });
+    }
+
     // ===== SETCARD =====
     if (sub === "setcard") {
       const cardId = interaction.options.getString("card", true);
@@ -447,11 +501,12 @@ client.on("interactionCreate", async (interaction) => {
     // ===== VIEW =====
     if (sub === "view") {
       const user = interaction.options.getUser("user") || interaction.user;
-      const savedCard = await getCard(guildId, user.id);
-      const cardId = savedCard || "og";
+      const saved = await getCard(guildId, user.id);
+      const cardId = saved?.card_id || saved || "og";
+      const stampId = saved?.stamp_id || "staff_default";
       if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Your saved card is invalid. Run `/stamp setcard` again.", ephemeral: true });
       const count = await getCount(guildId, user.id, cardId);
-      const buffer = await renderStampCard(cardId, count);
+      const buffer = await renderStampCard(cardId, count, stampId);
       return interaction.reply({
         content: `👑 ${user.username} — **${STAMP_CARDS[cardId].name}** — **${count}/${STAMP_GOAL}**`,
         files: [{ attachment: buffer, name: "stamp-card.png" }],
@@ -477,7 +532,7 @@ client.on("interactionCreate", async (interaction) => {
       if (!targetMember) return interaction.reply({ content: "❌ I can't find that member in this server.", ephemeral: true });
 
       const savedCard = await getCard(guildId, targetUser.id);
-      const cardId = savedCard || "og";
+      const cardId = savedCard?.card_id || savedCard || "og";
       if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`.", ephemeral: true });
 
       // RESET
@@ -501,9 +556,11 @@ client.on("interactionCreate", async (interaction) => {
       const current = await getCount(guildId, targetUser.id, cardId);
       const amount = interaction.options.getInteger("amount") || 1;
       const next = sub === "add" ? current + amount : Math.max(0, current - amount);
-      const stampId = interaction.options.getString("design") || "staff_default";
+      const overrideStamp = interaction.options.getString("design");
+      const stampId = overrideStamp || await getStaffStamp(guildId, interaction.user.id);
 
       await upsertCount(guildId, targetUser.id, cardId, next);
+      await setStamp(guildId, targetUser.id, stampId);
 
       // Completion
       if (sub === "add" && current < STAMP_GOAL && next >= STAMP_GOAL) {
