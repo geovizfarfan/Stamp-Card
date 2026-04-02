@@ -489,13 +489,33 @@ client.on("interactionCreate", async (interaction) => {
       const cardId = interaction.options.getString("card", true);
       const targetUser = interaction.options.getUser("user");
       if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Unknown card choice.", ephemeral: true });
-      if (targetUser && targetUser.id !== interaction.user.id) {
-        if (!canManage(interaction)) return interaction.reply({ content: "❌ You don't have permission to set another member's card.", ephemeral: true });
-        await setCard(guildId, targetUser.id, cardId);
-        return interaction.reply({ content: `✅ **${targetUser.username}'s** stamp card has been set to **${STAMP_CARDS[cardId].name}**.` });
+
+      const userId = (targetUser && targetUser.id !== interaction.user.id) ? targetUser.id : interaction.user.id;
+      const isOther = targetUser && targetUser.id !== interaction.user.id;
+
+      if (isOther && !canManage(interaction)) {
+        return interaction.reply({ content: "❌ You don't have permission to set another member's card.", ephemeral: true });
       }
-      await setCard(guildId, interaction.user.id, cardId);
-      return interaction.reply({ content: `✅ Saved! Your stamp card is now **${STAMP_CARDS[cardId].name}**.`, ephemeral: true });
+
+      // Transfer stamps from old card to new card
+      const oldSaved = await getCard(guildId, userId);
+      const oldCardId = oldSaved?.card_id || oldSaved;
+      let transferredCount = 0;
+      if (oldCardId && oldCardId !== cardId && STAMP_CARDS[oldCardId]) {
+        transferredCount = await getCount(guildId, userId, oldCardId);
+        if (transferredCount > 0) {
+          await deleteCount(guildId, userId, oldCardId);
+          await upsertCount(guildId, userId, cardId, transferredCount);
+        }
+      }
+
+      await setCard(guildId, userId, cardId);
+
+      const transferNote = transferredCount > 0 ? ` **${transferredCount}** stamp(s) have been transferred to the new card!` : "";
+      if (isOther) {
+        return interaction.reply({ content: `✅ **${targetUser.username}'s** stamp card has been set to **${STAMP_CARDS[cardId].name}**.${transferNote}` });
+      }
+      return interaction.reply({ content: `✅ Saved! Your stamp card is now **${STAMP_CARDS[cardId].name}**.${transferNote}`, ephemeral: true });
     }
 
     // ===== VIEW =====
@@ -562,18 +582,25 @@ client.on("interactionCreate", async (interaction) => {
       await upsertCount(guildId, targetUser.id, cardId, next);
       await setStamp(guildId, targetUser.id, stampId);
 
-      // Completion
+      // Completion with overflow
       if (sub === "add" && current < STAMP_GOAL && next >= STAMP_GOAL) {
+        const overflow = next - STAMP_GOAL;
         const prevTotal = await countCompleted(guildId, targetUser.id);
         const cardNumber = prevTotal + 1;
         await insertCompleted(guildId, targetUser.id, cardId, cardNumber);
-        await postCompletedWithImage({ interaction, targetUser, cardId, stampId, count: next, cardNumber });
+        await postCompletedWithImage({ interaction, targetUser, cardId, stampId, count: STAMP_GOAL, cardNumber });
         await deleteCount(guildId, targetUser.id, cardId);
         if (!targetMember.roles.cache.has(REWARD_ROLE_ID)) await targetMember.roles.add(REWARD_ROLE_ID).catch(() => {});
-        await logStampWithImage({ interaction, targetUser, cardId, stampId, action: `🏅 Card #${cardNumber} COMPLETED & reset for next card`, count: next });
+        await logStampWithImage({ interaction, targetUser, cardId, stampId, action: `🏅 Card #${cardNumber} COMPLETED & reset for next card`, count: STAMP_GOAL });
+
+        // Carry over overflow stamps to new card
+        if (overflow > 0) {
+          await upsertCount(guildId, targetUser.id, cardId, overflow);
+        }
+
+        const overflowNote = overflow > 0 ? ` **${overflow}** stamp(s) have been carried over to their new card!` : ` They can start collecting again!`;
         return interaction.reply(
-          `🎉 **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! 🏅\n` +
-          `Their card has been reset — they can start collecting again, or use \`/stamp setcard\` to switch to a different card design!`
+          `🎉 **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! 🏅\n${overflowNote}`
         );
       }
 
