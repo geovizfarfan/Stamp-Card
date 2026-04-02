@@ -608,6 +608,7 @@ client.on("interactionCreate", async (interaction) => {
     // ===== ADD / REMOVE / RESET =====
     if (sub === "add" || sub === "remove" || sub === "reset") {
       if (!canManage(interaction)) return interaction.reply({ content: "❌ You don't have permission to manage stamps.", ephemeral: true });
+      await interaction.deferReply();
 
       const targetUser = interaction.options.getUser("user", true);
       const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
@@ -631,7 +632,7 @@ client.on("interactionCreate", async (interaction) => {
           action: `♻️ Reset (was ${current})${newCardId && STAMP_CARDS[newCardId] ? ` → switched to ${STAMP_CARDS[newCardId].name}` : ""}`,
           count: 0,
         });
-        return interaction.reply(`♻️ Reset complete. ${targetUser.username} is now **0/${STAMP_GOAL}** on **${STAMP_CARDS[activeCardId].name}**.${cardSwitchNote}`);
+        return interaction.editReply(`♻️ Reset complete. ${targetUser.username} is now **0/${STAMP_GOAL}** on **${STAMP_CARDS[activeCardId].name}**.${cardSwitchNote}`);
       }
 
       // ADD / REMOVE
@@ -661,7 +662,7 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         const overflowNote = overflow > 0 ? ` **${overflow}** stamp(s) have been carried over to their new card!` : ` They can start collecting again!`;
-        return interaction.reply(
+        return interaction.editReply(
           `🎉 **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! 🏅\n${overflowNote}`
         );
       }
@@ -674,7 +675,7 @@ client.on("interactionCreate", async (interaction) => {
         action: sub === "add" ? `➕ Added ${amount} (${current} → ${next})` : `➖ Removed ${amount} (${current} → ${next})`,
         count: next,
       });
-      return interaction.reply(`✅ ${targetUser.username} now has **${next}/${STAMP_GOAL}** on **${STAMP_CARDS[cardId].name}**.`);
+      return interaction.editReply(`✅ ${targetUser.username} now has **${next}/${STAMP_GOAL}** on **${STAMP_CARDS[cardId].name}**.`);
     }
 
     return interaction.reply({ content: "❌ Unknown subcommand.", ephemeral: true });
