@@ -55,7 +55,7 @@ const STAMPS = {
   tbp:           { name: "TBP",                  file: "TBP Stamp.png" },
   ever_after:    { name: "Ever After Approved",  file: "Ever After Stamp.png" },
   staff:         { name: "Staff Approved",       file: "Staff Approved.png" },
-  staff_default: { name: "Staff Approved (Default)", file: "Staff Approved Default.png" },
+  staff_default: { name: "Staff Approved (Default)", file: "Staff Approved (default).png" },
   villain:       { name: "Ever After Villain",   file: "Ever After Villain Stamp.png" },
 };
 
