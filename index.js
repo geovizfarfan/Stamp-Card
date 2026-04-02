@@ -327,6 +327,11 @@ const commands = [
         )
     )
     .addSubcommand((s) =>
+      s.setName("deletecompleted").setDescription("Remove a completed card from a user's history (managers only)")
+        .addUserOption((o) => o.setName("user").setDescription("Member").setRequired(true))
+        .addIntegerOption((o) => o.setName("card").setDescription("Card number to delete").setRequired(true).setMinValue(1))
+    )
+    .addSubcommand((s) =>
       s.setName("resetall").setDescription("Reset ALL stamp cards in this server (admin/owner only)")
     ),
 ].map((c) => c.toJSON());
@@ -505,6 +510,27 @@ client.on("interactionCreate", async (interaction) => {
       }
 
       return;
+    }
+
+    // ===== DELETE COMPLETED =====
+    if (sub === "deletecompleted") {
+      if (!canManage(interaction)) return interaction.reply({ content: "❌ You don't have permission to do this.", ephemeral: true });
+      const targetUser = interaction.options.getUser("user", true);
+      const cardNumber = interaction.options.getInteger("card", true);
+
+      const res = await pool.query(
+        'SELECT * FROM completed_cards WHERE guild_id=$1 AND user_id=$2 AND card_number=$3',
+        [guildId, targetUser.id, cardNumber]
+      );
+      const record = res.rows[0];
+      if (!record) return interaction.reply({ content: `❌ Card #${cardNumber} not found for **${targetUser.username}**.`, ephemeral: true });
+
+      await pool.query('DELETE FROM completed_cards WHERE id=$1', [record.id]);
+
+      return interaction.reply({
+        content: `🗑️ **Card #${cardNumber}** has been removed from **${targetUser.username}'s** history.`,
+        allowedMentions: { users: [] },
+      });
     }
 
     // ===== CLAIM =====
