@@ -256,7 +256,7 @@ const commands = [
       s.setName("add").setDescription("Add stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
         .addStringOption((o) =>
-          o.setName("stamp").setDescription("Which stamp to use?").setRequired(true).addChoices(...STAMP_CHOICES)
+          o.setName("design").setDescription("Which stamp to use?").setRequired(true).addChoices(...STAMP_CHOICES)
         )
         .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setMinValue(1))
     )
@@ -501,7 +501,7 @@ client.on("interactionCreate", async (interaction) => {
       const current = await getCount(guildId, targetUser.id, cardId);
       const amount = interaction.options.getInteger("amount") || 1;
       const next = sub === "add" ? current + amount : Math.max(0, current - amount);
-      const stampId = interaction.options.getString("stamp") || "staff_default";
+      const stampId = interaction.options.getString("design") || "staff_default";
 
       await upsertCount(guildId, targetUser.id, cardId, next);
 
