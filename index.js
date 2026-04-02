@@ -33,10 +33,16 @@ if (!TOKEN || !GUILD_ID || !REWARD_ROLE_ID) {
 // CARDS
 // =====================
 const STAMP_CARDS = {
-  spring: { name: "TBP Spring", template: "TBP_Spring.png" },
-  vibe:   { name: "TBP Vibe",   template: "TBP_Vibe.png" },
-  dice:   { name: "TBP Dice",   template: "TBP_Dice_Themed.png" },
-  neon:   { name: "TBP Neon",   template: "TBP_Neon_Royal_Night_Mode.png" },
+  og:      { name: "TBP OG",         template: "TBP OG Stamp Card.png" },
+  pink:    { name: "TBP Pink",       template: "TBP Pink Stamp Card.png" },
+  black:   { name: "TBP Black",      template: "TBP Black Stamp Card.png" },
+  beige:   { name: "TBP Beige",      template: "TBP Beige Stamp Card.png" },
+  marbled: { name: "TBP Marbled",    template: "TBP Marbled Stamp Card.png" },
+  tbpcard: { name: "TBP Stamp Card", template: "TBP Stamp Card.png" },
+  spring:  { name: "TBP Spring",     template: "TBP_Spring.png" },
+  vibe:    { name: "TBP Vibe",       template: "TBP_Vibe.png" },
+  dice:    { name: "TBP Dice",       template: "TBP_Dice_Themed.png" },
+  neon:    { name: "TBP Neon",       template: "TBP_Neon_Royal_Night_Mode.png" },
 };
 
 const CARD_CHOICES = Object.entries(STAMP_CARDS).map(([value, c]) => ({ name: c.name, value }));
@@ -59,6 +65,30 @@ const STAMP_CHOICES = Object.entries(STAMPS).map(([value, s]) => ({ name: s.name
 // POSITIONS PER CARD
 // =====================
 const POSITIONS_BY_CARD = {
+  og: [
+    { cx: 240, cy: 210 }, { cx: 345, cy: 210 }, { cx: 450, cy: 210 }, { cx: 555, cy: 210 }, { cx: 660, cy: 210 },
+    { cx: 240, cy: 314 }, { cx: 345, cy: 314 }, { cx: 450, cy: 314 }, { cx: 555, cy: 314 }, { cx: 660, cy: 314 },
+  ],
+  pink: [
+    { cx: 128, cy: 220 }, { cx: 273, cy: 220 }, { cx: 438, cy: 220 }, { cx: 603, cy: 220 }, { cx: 765, cy: 220 },
+    { cx: 128, cy: 355 }, { cx: 273, cy: 355 }, { cx: 438, cy: 355 }, { cx: 603, cy: 355 }, { cx: 765, cy: 355 },
+  ],
+  black: [
+    { cx: 125, cy: 220 }, { cx: 285, cy: 220 }, { cx: 447, cy: 220 }, { cx: 608, cy: 220 }, { cx: 770, cy: 220 },
+    { cx: 125, cy: 355 }, { cx: 285, cy: 355 }, { cx: 447, cy: 355 }, { cx: 608, cy: 355 }, { cx: 770, cy: 355 },
+  ],
+  beige: [
+    { cx: 124, cy: 230 }, { cx: 273, cy: 230 }, { cx: 443, cy: 230 }, { cx: 613, cy: 230 }, { cx: 777, cy: 230 },
+    { cx: 124, cy: 372 }, { cx: 273, cy: 372 }, { cx: 443, cy: 372 }, { cx: 613, cy: 372 }, { cx: 777, cy: 372 },
+  ],
+  marbled: [
+    { cx: 131, cy: 226 }, { cx: 286, cy: 226 }, { cx: 447, cy: 226 }, { cx: 607, cy: 226 }, { cx: 767, cy: 226 },
+    { cx: 132, cy: 365 }, { cx: 288, cy: 365 }, { cx: 447, cy: 365 }, { cx: 607, cy: 365 }, { cx: 767, cy: 365 },
+  ],
+  tbpcard: [
+    { cx: 165, cy: 214 }, { cx: 305, cy: 214 }, { cx: 447, cy: 214 }, { cx: 587, cy: 214 }, { cx: 729, cy: 214 },
+    { cx: 165, cy: 363 }, { cx: 305, cy: 363 }, { cx: 447, cy: 363 }, { cx: 587, cy: 363 }, { cx: 729, cy: 363 },
+  ],
   spring: [
     { cx: 332, cy: 408 }, { cx: 538, cy: 408 }, { cx: 754, cy: 408 }, { cx: 968, cy: 408 }, { cx: 1178, cy: 408 },
     { cx: 332, cy: 672 }, { cx: 538, cy: 672 }, { cx: 754, cy: 672 }, { cx: 968, cy: 672 }, { cx: 1178, cy: 672 },
@@ -78,10 +108,16 @@ const POSITIONS_BY_CARD = {
 };
 
 const STAMP_SIZE_BY_CARD = {
-  spring: 150,
-  vibe:   140,
-  dice:   190,
-  neon:   160,
+  og:      90,
+  pink:    128,
+  black:   130,
+  beige:   130,
+  marbled: 130,
+  tbpcard: 135,
+  spring:  150,
+  vibe:    140,
+  dice:    190,
+  neon:    160,
 };
 
 // =====================
@@ -412,7 +448,7 @@ client.on("interactionCreate", async (interaction) => {
     if (sub === "view") {
       const user = interaction.options.getUser("user") || interaction.user;
       const savedCard = await getCard(guildId, user.id);
-      const cardId = savedCard || "spring";
+      const cardId = savedCard || "og";
       if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Your saved card is invalid. Run `/stamp setcard` again.", ephemeral: true });
       const count = await getCount(guildId, user.id, cardId);
       const buffer = await renderStampCard(cardId, count);
@@ -441,7 +477,7 @@ client.on("interactionCreate", async (interaction) => {
       if (!targetMember) return interaction.reply({ content: "❌ I can't find that member in this server.", ephemeral: true });
 
       const savedCard = await getCard(guildId, targetUser.id);
-      const cardId = savedCard || "spring";
+      const cardId = savedCard || "og";
       if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`.", ephemeral: true });
 
       // RESET
