@@ -39,10 +39,10 @@ const STAMP_CARDS = {
   beige:   { name: "TBP Beige",      template: "TBP Beige Stamp Card.png" },
   marbled: { name: "TBP Marbled",    template: "TBP Marbled Stamp Card.png" },
   tbpcard: { name: "TBP Stamp Card", template: "TBP Stamp Card.png" },
-  spring:  { name: "TBP Spring",     template: "TBP_Spring.png" },
-  vibe:    { name: "TBP Vibe",       template: "TBP_Vibe.png" },
-  dice:    { name: "TBP Dice",       template: "TBP_Dice_Themed.png" },
-  neon:    { name: "TBP Neon",       template: "TBP_Neon_Royal_Night_Mode.png" },
+  spring:  { name: "TBP Spring",     template: "TBP Spring.png" },
+  vibe:    { name: "TBP Vibe",       template: "TBP Vibe.png" },
+  dice:    { name: "TBP Dice",       template: "TBP Dice Themed.png" },
+  neon:    { name: "TBP Neon",       template: "TBP Neon Royal Night Mode.png" },
 };
 
 const CARD_CHOICES = Object.entries(STAMP_CARDS).map(([value, c]) => ({ name: c.name, value }));
@@ -51,12 +51,12 @@ const CARD_CHOICES = Object.entries(STAMP_CARDS).map(([value, c]) => ({ name: c.
 // STAMPS
 // =====================
 const STAMPS = {
-  crown:         { name: "Crown",                file: "Crown_Stamp.png" },
-  tbp:           { name: "TBP",                  file: "TBP_Stamp.png" },
-  ever_after:    { name: "Ever After Approved",  file: "Ever_After_Stamp.png" },
-  staff:         { name: "Staff Approved",       file: "Staff_Approved.png" },
-  staff_default: { name: "Staff Approved (Default)", file: "Staff_Approved__default_.png" },
-  villain:       { name: "Ever After Villain",   file: "Ever_After_Villan_Stamp.png" },
+  crown:         { name: "Crown",                file: "Crown Stamp.png" },
+  tbp:           { name: "TBP",                  file: "TBP Stamp.png" },
+  ever_after:    { name: "Ever After Approved",  file: "Ever After Stamp.png" },
+  staff:         { name: "Staff Approved",       file: "Staff Approved.png" },
+  staff_default: { name: "Staff Approved (Default)", file: "Staff Approved Default.png" },
+  villain:       { name: "Ever After Villain",   file: "Ever After Villain Stamp.png" },
 };
 
 const STAMP_CHOICES = Object.entries(STAMPS).map(([value, s]) => ({ name: s.name, value }));
@@ -501,7 +501,7 @@ client.on("interactionCreate", async (interaction) => {
       const current = await getCount(guildId, targetUser.id, cardId);
       const amount = interaction.options.getInteger("amount") || 1;
       const next = sub === "add" ? current + amount : Math.max(0, current - amount);
-      const stampId = interaction.options.getString("stamp") || "crown";
+      const stampId = interaction.options.getString("stamp") || "staff_default";
 
       await upsertCount(guildId, targetUser.id, cardId, next);
 
