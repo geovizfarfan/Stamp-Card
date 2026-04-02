@@ -487,23 +487,23 @@ client.on("interactionCreate", async (interaction) => {
       const lines = rows.map((r) => {
         const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
         const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
-        const claimStatus = r.claimed ? `✅ **Claimed**` : `⏳ **Unclaimed**`;
-        return `🏅 **Card #${r.card_number}** — ${cardName} — ${date} — ${claimStatus}`;
+        const claimStatus = r.claimed ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
+        return `<:medaltop:1489043799307980893> **Card #${r.card_number}** — ${cardName} — ${date} — ${claimStatus}`;
       });
 
       await interaction.editReply({
-        content: `## 📜 Stamp Card History for ${user.username}\n🃏 Total cards completed: **${total}**\n\n` + lines.join("\n"),
+        content: `## <a:412536pastelpurplesparklies:1489110919354253363> Stamp History for ${user.username} <a:412536pastelpurplesparklies:1489110919354253363>\n<:cards:1489111688849657917> Total cards completed: **${total}**\n\n` + lines.join("\n"),
         allowedMentions: { users: [] },
       });
 
       // Send each card image as a follow-up
       for (const r of rows) {
         const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
-        const claimStatus = r.claimed ? `✅ Claimed` : `⏳ Unclaimed`;
+        const claimStatus = r.claimed ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
         if (!STAMP_CARDS[r.card_id]) continue;
         const buffer = await renderStampCard(r.card_id, 10, stampId);
         await interaction.followUp({
-          content: `🏅 **Card #${r.card_number}** — ${cardName} — ${claimStatus}`,
+          content: `<:medaltop:1489043799307980893> **Card #${r.card_number}** — ${cardName} — ${claimStatus}`,
           files: [{ attachment: buffer, name: `card_${r.card_number}.png` }],
           allowedMentions: { users: [] },
         });
@@ -689,7 +689,7 @@ client.on("interactionCreate", async (interaction) => {
 
         const overflowNote = overflow > 0 ? ` **${overflow}** stamp(s) have been carried over to their new card!` : ` They can start collecting again!`;
         return interaction.editReply(
-          `🎉 **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! 🏅\n${overflowNote}`
+          `<a:confettipenguin:1489113733845356704> **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! <:medaltop:1489043799307980893>\n${overflowNote}`
         );
       }
 
