@@ -150,9 +150,11 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS completed_cards (
       id SERIAL PRIMARY KEY,
       guild_id TEXT, user_id TEXT, card_id TEXT,
-      card_number INTEGER, completed_at BIGINT
+      card_number INTEGER, completed_at BIGINT,
+      claimed BOOLEAN DEFAULT FALSE
     )
   `);
+  await pool.query(`ALTER TABLE completed_cards ADD COLUMN IF NOT EXISTS claimed BOOLEAN DEFAULT FALSE`);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS staff_stamps (
       guild_id TEXT, user_id TEXT, stamp_id TEXT,
@@ -313,6 +315,18 @@ const commands = [
         )
     )
     .addSubcommand((s) =>
+      s.setName("claim").setDescription("Mark a completed card as claimed/unclaimed (managers only)")
+        .addUserOption((o) => o.setName("user").setDescription("Member").setRequired(true))
+        .addIntegerOption((o) => o.setName("card").setDescription("Card number to mark").setRequired(true).setMinValue(1))
+        .addStringOption((o) =>
+          o.setName("status").setDescription("Claimed or unclaimed?").setRequired(true)
+            .addChoices(
+              { name: "✅ Claimed", value: "claimed" },
+              { name: "⏳ Unclaimed", value: "unclaimed" }
+            )
+        )
+    )
+    .addSubcommand((s) =>
       s.setName("resetall").setDescription("Reset ALL stamp cards in this server (admin/owner only)")
     ),
 ].map((c) => c.toJSON());
@@ -458,14 +472,52 @@ client.on("interactionCreate", async (interaction) => {
       const rows = await getHistory(guildId, user.id);
       const total = await countCompleted(guildId, user.id);
       if (!rows.length) return interaction.reply({ content: `📭 **${user.username}** hasn't completed any stamp cards yet.`, ephemeral: true });
-      const lines = rows.map((r) => {
+
+      await interaction.deferReply();
+
+      const files = [];
+      const lines = [];
+
+      for (const r of rows) {
         const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
         const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
-        return `🏅 **Card #${r.card_number}** — ${cardName} — completed ${date}`;
-      });
-      return interaction.reply({
+        const claimStatus = r.claimed ? `✅ **Claimed**` : `⏳ **Unclaimed**`;
+        const savedStamp = await getCard(guildId, user.id);
+        const stampId = savedStamp?.stamp_id || 'staff_default';
+        const buffer = await renderStampCard(r.card_id, 10, stampId);
+        const filename = `card_${r.card_number}.png`;
+        files.push({ attachment: buffer, name: filename });
+        lines.push(`🏅 **Card #${r.card_number}** — ${cardName} — ${date} — ${claimStatus}`);
+      }
+
+      return interaction.editReply({
         content: `## 📜 Stamp Card History for ${user.username}\n🃏 Total cards completed: **${total}**\n\n` + lines.join("\n"),
-        ephemeral: false,
+        files,
+        allowedMentions: { users: [] },
+      });
+    }
+
+    // ===== CLAIM =====
+    if (sub === "claim") {
+      if (!canManage(interaction)) return interaction.reply({ content: "❌ You don't have permission to mark claims.", ephemeral: true });
+      const targetUser = interaction.options.getUser("user", true);
+      const cardNumber = interaction.options.getInteger("card", true);
+      const status = interaction.options.getString("status", true);
+
+      // Find the completed card by user and card number
+      const res = await pool.query(
+        'SELECT * FROM completed_cards WHERE guild_id=$1 AND user_id=$2 AND card_number=$3',
+        [guildId, targetUser.id, cardNumber]
+      );
+      const record = res.rows[0];
+      if (!record) return interaction.reply({ content: `❌ Card #${cardNumber} not found for ${targetUser.username}.`, ephemeral: true });
+
+      const claimed = status === 'claimed';
+      await setClaimedStatus(record.id, claimed);
+
+      const emoji = claimed ? '✅' : '⏳';
+      return interaction.reply({
+        content: `${emoji} **Card #${cardNumber}** for **${targetUser.username}** has been marked as **${claimed ? 'Claimed' : 'Unclaimed'}**.`,
         allowedMentions: { users: [] },
       });
     }
