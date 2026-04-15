@@ -154,7 +154,14 @@ async function initDB() {
       claimed BOOLEAN DEFAULT FALSE
     )
   `);
-  await pool.query(`ALTER TABLE completed_cards ADD COLUMN IF NOT EXISTS claimed BOOLEAN DEFAULT FALSE`);
+  try {
+    await pool.query(`ALTER TABLE completed_cards ADD COLUMN IF NOT EXISTS claimed BOOLEAN DEFAULT FALSE`);
+    // Set all existing NULL claimed values to false
+    await pool.query(`UPDATE completed_cards SET claimed = FALSE WHERE claimed IS NULL`);
+    console.log('✅ claimed column ensured');
+  } catch(e) {
+    console.log('claimed column note:', e.message);
+  }
   await pool.query(`
     CREATE TABLE IF NOT EXISTS staff_stamps (
       guild_id TEXT, user_id TEXT, stamp_id TEXT,
