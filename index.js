@@ -226,6 +226,15 @@ async function insertCompleted(guildId, userId, cardId, cardNumber) {
     [guildId, userId, cardId, cardNumber, Date.now()]
   );
 }
+async function setClaimedStatus(id, claimed) {
+  await pool.query('UPDATE completed_cards SET claimed=$1 WHERE id=$2', [claimed, id]);
+}
+
+async function getCompletedCardById(id) {
+  const res = await pool.query('SELECT * FROM completed_cards WHERE id=$1', [id]);
+  return res.rows[0] || null;
+}
+
 async function getHistory(guildId, userId) {
   const res = await pool.query(
     `SELECT card_id, card_number, completed_at FROM completed_cards WHERE guild_id=$1 AND user_id=$2 ORDER BY completed_at DESC`,
