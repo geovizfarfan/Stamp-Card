@@ -496,7 +496,7 @@ client.on("interactionCreate", async (interaction) => {
       const lines = rows.map((r) => {
         const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
         const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
-        const claimStatus = r.claimed ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
+        const claimStatus = (r.claimed === true || r.claimed === 't' || r.claimed === 'true') ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
         return `<:medaltop:1489043799307980893> **Card #${r.card_number}** — ${cardName} — ${date} — ${claimStatus}`;
       });
 
