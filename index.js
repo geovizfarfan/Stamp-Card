@@ -558,7 +558,7 @@ client.on("interactionCreate", async (interaction) => {
       if (!record) return interaction.reply({ content: `❌ Card #${cardNumber} not found for ${targetUser.username}.`, ephemeral: true });
 
       const claimed = status === 'claimed';
-      await setClaimedStatus(record.id, claimed);
+      await setClaimedStatus(record.id, claimed); console.log('CLAIMED UPDATE:', record.id, claimed);
 
       const emoji = claimed ? '✅' : '⏳';
       return interaction.reply({
