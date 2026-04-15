@@ -155,7 +155,7 @@ async function initDB() {
     )
   `);
   try {
-    await pool.query(`ALTER TABLE completed_cards ADD COLUMN IF NOT EXISTS claimed BOOLEAN DEFAULT FALSE`);
+    try { await pool.query(`ALTER TABLE completed_cards ADD COLUMN IF NOT EXISTS claimed BOOLEAN DEFAULT FALSE`); await pool.query(`UPDATE completed_cards SET claimed = FALSE WHERE claimed IS NULL`); console.log("claimed column fixed"); } catch(e) { console.log("claimed error:", e.message); }
     // Set all existing NULL claimed values to false
     await pool.query(`UPDATE completed_cards SET claimed = FALSE WHERE claimed IS NULL`);
     console.log('✅ claimed column ensured');
