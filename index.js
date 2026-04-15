@@ -508,7 +508,7 @@ client.on("interactionCreate", async (interaction) => {
       // Send each card image as a follow-up
       for (const r of rows) {
         const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
-        const claimStatus = r.claimed ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
+        const claimStatus = (r.claimed === true || r.claimed === "t" || r.claimed === "true") ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
         if (!STAMP_CARDS[r.card_id]) continue;
         const buffer = await renderStampCard(r.card_id, 10, stampId);
         await interaction.followUp({
