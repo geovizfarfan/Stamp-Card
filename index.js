@@ -244,7 +244,7 @@ async function getCompletedCardById(id) {
 
 async function getHistory(guildId, userId) {
   const res = await pool.query(
-    `SELECT card_id, card_number, completed_at FROM completed_cards WHERE guild_id=$1 AND user_id=$2 ORDER BY completed_at DESC`,
+    `SELECT id, card_id, card_number, completed_at, claimed FROM completed_cards WHERE guild_id=$1 AND user_id=$2 ORDER BY completed_at DESC`,
     [guildId, userId]
   );
   return res.rows;
