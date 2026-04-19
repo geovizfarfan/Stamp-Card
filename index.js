@@ -54,6 +54,9 @@ const STAMP_CARDS = {
   og_tbp:           { name: "OG TBP",            template: "OG_TBP_.png" },
   pink_card:        { name: "Pink",              template: "Pink.png" },
   kirby:            { name: "Kirby",             template: "Kirby.png" },
+  kirby_meadow:     { name: "Kirby Meadow",      template: "kirby_2.png" },
+  kirby_rainbow:    { name: "Kirby Rainbow",     template: "kirby_3.png" },
+  kirby_neon:       { name: "Kirby Neon",        template: "kirby_4.png" },
   purple_thunder:   { name: "Purple Thunder",    template: "Purple_Thunder.png" },
   silver_card:      { name: "Silver",            template: "Silver.png" },
   spring_new:       { name: "Spring",            template: "Spring.png" },
@@ -194,6 +197,18 @@ const POSITIONS_BY_CARD = {
     { cx: 262, cy: 417 }, { cx: 506, cy: 417 }, { cx: 746, cy: 417 }, { cx: 986, cy: 417 }, { cx: 1224, cy: 417 },
     { cx: 262, cy: 638 }, { cx: 506, cy: 638 }, { cx: 746, cy: 638 }, { cx: 986, cy: 638 }, { cx: 1224, cy: 638 },
   ],
+  kirby_meadow: [
+    { cx: 274, cy: 374 }, { cx: 528, cy: 374 }, { cx: 774, cy: 374 }, { cx: 1014, cy: 374 }, { cx: 1262, cy: 374 },
+    { cx: 284, cy: 605 }, { cx: 520, cy: 605 }, { cx: 774, cy: 605 }, { cx: 1010, cy: 605 }, { cx: 1258, cy: 605 },
+  ],
+  kirby_rainbow: [
+    { cx: 306, cy: 379 }, { cx: 540, cy: 379 }, { cx: 768, cy: 379 }, { cx: 996, cy: 379 }, { cx: 1222, cy: 379 },
+    { cx: 308, cy: 608 }, { cx: 542, cy: 608 }, { cx: 770, cy: 608 }, { cx: 986, cy: 608 }, { cx: 1214, cy: 608 },
+  ],
+  kirby_neon: [
+    { cx: 240, cy: 390 }, { cx: 480, cy: 390 }, { cx: 760, cy: 390 }, { cx: 1006, cy: 390 }, { cx: 1260, cy: 390 },
+    { cx: 250, cy: 627 }, { cx: 494, cy: 627 }, { cx: 752, cy: 627 }, { cx: 1016, cy: 627 }, { cx: 1262, cy: 627 },
+  ],
 };
 
 const STAMP_SIZE_BY_CARD = {
@@ -218,6 +233,9 @@ const STAMP_SIZE_BY_CARD = {
   og_tbp:           185,
   pink_card:        158,
   kirby:            195,
+  kirby_meadow:     158,
+  kirby_rainbow:    166,
+  kirby_neon:       176,
   purple_thunder:   155,
   silver_card:      165,
   spring_new:       160,
