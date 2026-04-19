@@ -54,9 +54,6 @@ const STAMP_CARDS = {
   og_tbp:           { name: "OG TBP",            template: "OG_TBP_.png" },
   pink_card:        { name: "Pink",              template: "Pink.png" },
   kirby:            { name: "Kirby",             template: "Kirby.png" },
-  kirby_meadow:     { name: "Kirby Meadow",      template: "kirby_2.png" },
-  kirby_rainbow:    { name: "Kirby Rainbow",     template: "kirby_3.png" },
-  kirby_neon:       { name: "Kirby Neon",        template: "kirby_4.png" },
   purple_thunder:   { name: "Purple Thunder",    template: "Purple_Thunder.png" },
   silver_card:      { name: "Silver",            template: "Silver.png" },
   spring_new:       { name: "Spring",            template: "Spring.png" },
@@ -89,10 +86,9 @@ const STAMP_CHOICES = Object.entries(STAMPS).map(([value, s]) => ({ name: s.name
 // POSITIONS PER CARD
 // =====================
 const POSITIONS_BY_CARD = {
-  // ── Confirmed correct (Hough circle detection) ──
   black_design: [
-    { cx: 257, cy: 390 }, { cx: 505, cy: 390 }, { cx: 753, cy: 390 }, { cx: 1000, cy: 390 }, { cx: 1250, cy: 390 },
-    { cx: 257, cy: 640 }, { cx: 505, cy: 640 }, { cx: 753, cy: 640 }, { cx: 1000, cy: 640 }, { cx: 1250, cy: 640 },
+    { cx: 262, cy: 405 }, { cx: 492, cy: 405 }, { cx: 738, cy: 405 }, { cx: 1004, cy: 405 }, { cx: 1254, cy: 405 },
+    { cx: 262, cy: 633 }, { cx: 492, cy: 633 }, { cx: 738, cy: 633 }, { cx: 1004, cy: 633 }, { cx: 1254, cy: 633 },
   ],
   bubble: [
     { cx: 271, cy: 425 }, { cx: 497, cy: 425 }, { cx: 734, cy: 425 }, { cx: 964, cy: 425 }, { cx: 1194, cy: 425 },
@@ -174,18 +170,6 @@ const POSITIONS_BY_CARD = {
     { cx: 264, cy: 413 }, { cx: 514, cy: 413 }, { cx: 762, cy: 413 }, { cx: 1004, cy: 413 }, { cx: 1246, cy: 413 },
     { cx: 264, cy: 652 }, { cx: 514, cy: 652 }, { cx: 762, cy: 652 }, { cx: 1004, cy: 652 }, { cx: 1246, cy: 652 },
   ],
-  kirby_meadow: [
-    { cx: 274, cy: 374 }, { cx: 528, cy: 374 }, { cx: 774, cy: 374 }, { cx: 1014, cy: 374 }, { cx: 1262, cy: 374 },
-    { cx: 284, cy: 605 }, { cx: 520, cy: 605 }, { cx: 774, cy: 605 }, { cx: 1010, cy: 605 }, { cx: 1258, cy: 605 },
-  ],
-  kirby_rainbow: [
-    { cx: 306, cy: 379 }, { cx: 540, cy: 379 }, { cx: 768, cy: 379 }, { cx: 996, cy: 379 }, { cx: 1222, cy: 379 },
-    { cx: 308, cy: 608 }, { cx: 542, cy: 608 }, { cx: 770, cy: 608 }, { cx: 986, cy: 608 }, { cx: 1214, cy: 608 },
-  ],
-  kirby_neon: [
-    { cx: 240, cy: 390 }, { cx: 480, cy: 390 }, { cx: 760, cy: 390 }, { cx: 1006, cy: 390 }, { cx: 1260, cy: 390 },
-    { cx: 250, cy: 627 }, { cx: 494, cy: 627 }, { cx: 752, cy: 627 }, { cx: 1016, cy: 627 }, { cx: 1262, cy: 627 },
-  ],
   purple_thunder: [
     { cx: 290, cy: 421 }, { cx: 512, cy: 421 }, { cx: 738, cy: 421 }, { cx: 963, cy: 421 }, { cx: 1190, cy: 421 },
     { cx: 290, cy: 646 }, { cx: 512, cy: 646 }, { cx: 738, cy: 646 }, { cx: 963, cy: 646 }, { cx: 1190, cy: 646 },
@@ -203,8 +187,8 @@ const POSITIONS_BY_CARD = {
     { cx: 227, cy: 660 }, { cx: 473, cy: 660 }, { cx: 731, cy: 660 }, { cx: 983, cy: 660 }, { cx: 1241, cy: 660 },
   ],
   white_marble: [
-    { cx: 298, cy: 537 }, { cx: 527, cy: 537 }, { cx: 763, cy: 537 }, { cx: 997, cy: 537 }, { cx: 1229, cy: 537 },
-    { cx: 298, cy: 729 }, { cx: 527, cy: 729 }, { cx: 763, cy: 729 }, { cx: 997, cy: 729 }, { cx: 1229, cy: 729 },
+    { cx: 298, cy: 488 }, { cx: 526, cy: 488 }, { cx: 764, cy: 488 }, { cx: 996, cy: 488 }, { cx: 1228, cy: 488 },
+    { cx: 298, cy: 668 }, { cx: 526, cy: 668 }, { cx: 764, cy: 668 }, { cx: 996, cy: 668 }, { cx: 1228, cy: 668 },
   ],
   winter: [
     { cx: 262, cy: 417 }, { cx: 506, cy: 417 }, { cx: 746, cy: 417 }, { cx: 986, cy: 417 }, { cx: 1224, cy: 417 },
@@ -213,36 +197,33 @@ const POSITIONS_BY_CARD = {
 };
 
 const STAMP_SIZE_BY_CARD = {
-  black_design:     200,
-  bubble:           175,
-  fall:             175,
-  flower:           185,
-  furry_friend:     200,
-  galaxy:           185,
-  inso_by_daisys:   175,
-  inspo_by_bi:      205,
-  inspo_by_les:     215,
-  inspo_by_meows:   200,
-  inspo_by_nonbi:   185,
-  inspo_by_pets:    185,
-  inspo_by_pride:   185,
-  inspo_by_pups:    210,
-  inspo_by_reptiles:190,
-  inspo_by_trans:   195,
-  nebula:           190,
-  neon_purple:      180,
-  og_tbp:           205,
-  pink_card:        178,
-  kirby:            215,
-  kirby_meadow:     158,
-  kirby_rainbow:    166,
-  kirby_neon:       176,
-  purple_thunder:   175,
-  silver_card:      185,
-  spring_new:       180,
-  summer:           190,
-  white_marble:     170,
-  winter:           190,
+  black_design:     170,
+  bubble:           155,
+  fall:             155,
+  flower:           165,
+  furry_friend:     180,
+  galaxy:           165,
+  inso_by_daisys:   155,
+  inspo_by_bi:      185,
+  inspo_by_les:     195,
+  inspo_by_meows:   180,
+  inspo_by_nonbi:   165,
+  inspo_by_pets:    165,
+  inspo_by_pride:   165,
+  inspo_by_pups:    190,
+  inspo_by_reptiles:170,
+  inspo_by_trans:   175,
+  nebula:           170,
+  neon_purple:      160,
+  og_tbp:           185,
+  pink_card:        158,
+  kirby:            195,
+  purple_thunder:   155,
+  silver_card:      165,
+  spring_new:       160,
+  summer:           170,
+  white_marble:     165,
+  winter:           170,
 };
 
 // =====================
