@@ -33,18 +33,6 @@ if (!TOKEN || !GUILD_ID || !REWARD_ROLE_ID) {
 // CARDS
 // =====================
 const STAMP_CARDS = {
-  // Original cards
-  og:               { name: "TBP OG",           template: "TBP OG Stamp Card.png" },
-  pink:             { name: "TBP Pink",          template: "TBP Pink Stamp Card.png" },
-  black:            { name: "TBP Black",         template: "TBP Black Stamp Card.png" },
-  beige:            { name: "TBP Beige",         template: "TBP Beige Stamp Card.png" },
-  marbled:          { name: "TBP Marbled",       template: "TBP Marbled Stamp Card.png" },
-  tbpcard:          { name: "TBP Stamp Card",    template: "TBP Stamp Card.png" },
-  spring:           { name: "TBP Spring",        template: "TBP Spring.png" },
-  vibe:             { name: "TBP Vibe",          template: "TBP Vibe.png" },
-  dice:             { name: "TBP Dice",          template: "TBP Dice Themed.png" },
-  neon:             { name: "TBP Neon",          template: "TBP Neon Royal Night Mode.png" },
-  // New cards
   black_design:     { name: "Black Design",      template: "Black_Design.png" },
   bubble:           { name: "Bubble",            template: "Bubble.png" },
   fall:             { name: "Fall",              template: "Fall.png" },
@@ -80,13 +68,6 @@ const CARD_CHOICES = Object.entries(STAMP_CARDS).map(([value, c]) => ({ name: c.
 // STAMPS
 // =====================
 const STAMPS = {
-  crown:            { name: "Crown",                    file: "Crown Stamp.png" },
-  tbp:              { name: "TBP",                      file: "TBP Stamp.png" },
-  ever_after:       { name: "Ever After Approved",      file: "Ever After Stamp.png" },
-  staff:            { name: "Staff Approved",           file: "Staff Approved.png" },
-  staff_default:    { name: "Staff Approved (Default)", file: "Staff Approved (default).png" },
-  villain:          { name: "Ever After Villain",       file: "Ever After Villain Stamp.png" },
-  // New stamps
   black_stamp:      { name: "Black",                    file: "Black_Stamp.png" },
   board_princess:   { name: "Board Princess",           file: "Board_Princess_Stamp.png" },
   gold_stamp:       { name: "Gold",                     file: "Gold_Stamp.png" },
@@ -103,46 +84,6 @@ const STAMP_CHOICES = Object.entries(STAMPS).map(([value, s]) => ({ name: s.name
 // POSITIONS PER CARD
 // =====================
 const POSITIONS_BY_CARD = {
-  og: [
-    { cx: 240, cy: 210 }, { cx: 345, cy: 210 }, { cx: 450, cy: 210 }, { cx: 555, cy: 210 }, { cx: 660, cy: 210 },
-    { cx: 240, cy: 314 }, { cx: 345, cy: 314 }, { cx: 450, cy: 314 }, { cx: 555, cy: 314 }, { cx: 660, cy: 314 },
-  ],
-  pink: [
-    { cx: 128, cy: 220 }, { cx: 273, cy: 220 }, { cx: 438, cy: 220 }, { cx: 603, cy: 220 }, { cx: 765, cy: 220 },
-    { cx: 128, cy: 355 }, { cx: 273, cy: 355 }, { cx: 438, cy: 355 }, { cx: 603, cy: 355 }, { cx: 765, cy: 355 },
-  ],
-  black: [
-    { cx: 125, cy: 220 }, { cx: 285, cy: 220 }, { cx: 447, cy: 220 }, { cx: 608, cy: 220 }, { cx: 770, cy: 220 },
-    { cx: 125, cy: 355 }, { cx: 285, cy: 355 }, { cx: 447, cy: 355 }, { cx: 608, cy: 355 }, { cx: 770, cy: 355 },
-  ],
-  beige: [
-    { cx: 124, cy: 230 }, { cx: 273, cy: 230 }, { cx: 443, cy: 230 }, { cx: 613, cy: 230 }, { cx: 777, cy: 230 },
-    { cx: 124, cy: 372 }, { cx: 273, cy: 372 }, { cx: 443, cy: 372 }, { cx: 613, cy: 372 }, { cx: 777, cy: 372 },
-  ],
-  marbled: [
-    { cx: 131, cy: 226 }, { cx: 286, cy: 226 }, { cx: 447, cy: 226 }, { cx: 607, cy: 226 }, { cx: 767, cy: 226 },
-    { cx: 132, cy: 365 }, { cx: 288, cy: 365 }, { cx: 447, cy: 365 }, { cx: 607, cy: 365 }, { cx: 767, cy: 365 },
-  ],
-  tbpcard: [
-    { cx: 165, cy: 214 }, { cx: 305, cy: 214 }, { cx: 447, cy: 214 }, { cx: 587, cy: 214 }, { cx: 729, cy: 214 },
-    { cx: 165, cy: 363 }, { cx: 305, cy: 363 }, { cx: 447, cy: 363 }, { cx: 587, cy: 363 }, { cx: 729, cy: 363 },
-  ],
-  spring: [
-    { cx: 332, cy: 408 }, { cx: 538, cy: 408 }, { cx: 754, cy: 408 }, { cx: 968, cy: 408 }, { cx: 1178, cy: 408 },
-    { cx: 332, cy: 672 }, { cx: 538, cy: 672 }, { cx: 754, cy: 672 }, { cx: 968, cy: 672 }, { cx: 1178, cy: 672 },
-  ],
-  vibe: [
-    { cx: 308, cy: 536 }, { cx: 518, cy: 536 }, { cx: 750, cy: 536 }, { cx: 976, cy: 536 }, { cx: 1200, cy: 536 },
-    { cx: 308, cy: 728 }, { cx: 518, cy: 728 }, { cx: 750, cy: 728 }, { cx: 976, cy: 728 }, { cx: 1200, cy: 728 },
-  ],
-  dice: [
-    { cx: 280, cy: 464 }, { cx: 526, cy: 464 }, { cx: 760, cy: 484 }, { cx: 1004, cy: 464 }, { cx: 1246, cy: 464 },
-    { cx: 280, cy: 708 }, { cx: 526, cy: 708 }, { cx: 760, cy: 708 }, { cx: 1004, cy: 708 }, { cx: 1246, cy: 708 },
-  ],
-  neon: [
-    { cx: 260, cy: 478 }, { cx: 508, cy: 478 }, { cx: 752, cy: 478 }, { cx: 1018, cy: 478 }, { cx: 1276, cy: 478 },
-    { cx: 258, cy: 706 }, { cx: 508, cy: 706 }, { cx: 754, cy: 706 }, { cx: 1010, cy: 706 }, { cx: 1266, cy: 706 },
-  ],
   // New cards
   black_design: [
     { cx: 257, cy: 448 }, { cx: 505, cy: 448 }, { cx: 753, cy: 448 }, { cx: 1000, cy: 448 }, { cx: 1250, cy: 448 },
@@ -255,17 +196,6 @@ const POSITIONS_BY_CARD = {
 };
 
 const STAMP_SIZE_BY_CARD = {
-  // Original cards
-  og:               90,
-  pink:             128,
-  black:            130,
-  beige:            130,
-  marbled:          130,
-  tbpcard:          135,
-  spring:           150,
-  vibe:             140,
-  dice:             190,
-  neon:             160,
   // New cards
   black_design:     200,
   bubble:           175,
@@ -395,7 +325,7 @@ async function getStaffStamp(guildId, userId) {
     'SELECT stamp_id FROM staff_stamps WHERE guild_id=$1 AND user_id=$2',
     [guildId, userId]
   );
-  return res.rows[0]?.stamp_id || 'staff_default';
+  return res.rows[0]?.stamp_id || 'black_stamp';
 }
 
 async function setStaffStamp(guildId, userId, stampId) {
@@ -583,11 +513,11 @@ client.once("ready", async () => {
 // =====================
 // RENDER
 // =====================
-async function renderStampCard(cardId, stampCount, stampId = "crown") {
+async function renderStampCard(cardId, stampCount, stampId = "black_stamp") {
   const card = STAMP_CARDS[cardId];
   if (!card) throw new Error("Unknown cardId: " + cardId);
 
-  const stamp = STAMPS[stampId] || STAMPS.crown;
+  const stamp = STAMPS[stampId] || STAMPS.black_stamp;
 
   const template = await loadImage(path.join(__dirname, card.template));
   const stampImg = await loadImage(path.join(__dirname, stamp.file));
@@ -718,7 +648,7 @@ client.on("interactionCreate", async (interaction) => {
       await interaction.deferReply();
 
       const savedStamp = await getCard(guildId, user.id);
-      const stampId = savedStamp?.stamp_id || 'staff_default';
+      const stampId = savedStamp?.stamp_id || 'black_stamp';
 
       // Send summary first
       const lines = rows.map((r) => {
@@ -849,7 +779,7 @@ client.on("interactionCreate", async (interaction) => {
       const user = interaction.options.getUser("user") || interaction.user;
       const saved = await getCard(guildId, user.id);
       const cardId = saved?.card_id || saved || "og";
-      const stampId = saved?.stamp_id || "staff_default";
+      const stampId = saved?.stamp_id || "black_stamp";
       if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Your saved card is invalid. Run `/stamp setcard` again.", ephemeral: true });
       const count = await getCount(guildId, user.id, cardId);
       const buffer = await renderStampCard(cardId, count, stampId);
@@ -905,7 +835,7 @@ client.on("interactionCreate", async (interaction) => {
         const cardSwitchNote = newCardId && STAMP_CARDS[newCardId] ? ` Their card has been switched to **${STAMP_CARDS[newCardId].name}**.` : "";
         if (targetMember.roles.cache.has(REWARD_ROLE_ID)) await targetMember.roles.remove(REWARD_ROLE_ID).catch(() => {});
         await logStampWithImage({
-          interaction, targetUser, cardId: activeCardId, stampId: "crown",
+          interaction, targetUser, cardId: activeCardId, stampId: "black_stamp",
           action: `♻️ Reset (was ${current})${newCardId && STAMP_CARDS[newCardId] ? ` → switched to ${STAMP_CARDS[newCardId].name}` : ""}`,
           count: 0,
         });
