@@ -33,16 +33,45 @@ if (!TOKEN || !GUILD_ID || !REWARD_ROLE_ID) {
 // CARDS
 // =====================
 const STAMP_CARDS = {
-  og:      { name: "TBP OG",         template: "TBP OG Stamp Card.png" },
-  pink:    { name: "TBP Pink",       template: "TBP Pink Stamp Card.png" },
-  black:   { name: "TBP Black",      template: "TBP Black Stamp Card.png" },
-  beige:   { name: "TBP Beige",      template: "TBP Beige Stamp Card.png" },
-  marbled: { name: "TBP Marbled",    template: "TBP Marbled Stamp Card.png" },
-  tbpcard: { name: "TBP Stamp Card", template: "TBP Stamp Card.png" },
-  spring:  { name: "TBP Spring",     template: "TBP Spring.png" },
-  vibe:    { name: "TBP Vibe",       template: "TBP Vibe.png" },
-  dice:    { name: "TBP Dice",       template: "TBP Dice Themed.png" },
-  neon:    { name: "TBP Neon",       template: "TBP Neon Royal Night Mode.png" },
+  // Original cards
+  og:               { name: "TBP OG",           template: "TBP OG Stamp Card.png" },
+  pink:             { name: "TBP Pink",          template: "TBP Pink Stamp Card.png" },
+  black:            { name: "TBP Black",         template: "TBP Black Stamp Card.png" },
+  beige:            { name: "TBP Beige",         template: "TBP Beige Stamp Card.png" },
+  marbled:          { name: "TBP Marbled",       template: "TBP Marbled Stamp Card.png" },
+  tbpcard:          { name: "TBP Stamp Card",    template: "TBP Stamp Card.png" },
+  spring:           { name: "TBP Spring",        template: "TBP Spring.png" },
+  vibe:             { name: "TBP Vibe",          template: "TBP Vibe.png" },
+  dice:             { name: "TBP Dice",          template: "TBP Dice Themed.png" },
+  neon:             { name: "TBP Neon",          template: "TBP Neon Royal Night Mode.png" },
+  // New cards
+  black_design:     { name: "Black Design",      template: "Black_Design.png" },
+  bubble:           { name: "Bubble",            template: "Bubble.png" },
+  fall:             { name: "Fall",              template: "Fall.png" },
+  flower:           { name: "Flower",            template: "Flower.png" },
+  furry_friend:     { name: "Furry Friend",      template: "Furry_Friend.png" },
+  galaxy:           { name: "Galaxy",            template: "Galaxy.png" },
+  inso_by_daisys:   { name: "Inspo by Daisys",   template: "Inso_By_Daisys.png" },
+  inspo_by_bi:      { name: "Inspo by Bi",       template: "Inspo_by_Bi.png" },
+  inspo_by_les:     { name: "Inspo by Les",      template: "Inspo_By_Les.png" },
+  inspo_by_meows:   { name: "Inspo by Meows",    template: "Inspo_By_Meows.png" },
+  inspo_by_nonbi:   { name: "Inspo by Non-Bi",   template: "Inspo_By_Non-Bi.png" },
+  inspo_by_pets:    { name: "Inspo by Pets",     template: "Inspo_By_Pets.png" },
+  inspo_by_pride:   { name: "Inspo by Pride",    template: "Inspo_By_Pride.png" },
+  inspo_by_pups:    { name: "Inspo by Pups",     template: "Inspo_By_Pups.png" },
+  inspo_by_reptiles:{ name: "Inspo by Reptiles", template: "Inspo_By_Reptiles.png" },
+  inspo_by_trans:   { name: "Inspo by Trans",    template: "Inspo_By_Trans.png" },
+  nebula:           { name: "Nebula",            template: "Nebula.png" },
+  neon_purple:      { name: "Neon Purple",       template: "Neon_Purple.png" },
+  og_tbp:           { name: "OG TBP",            template: "OG_TBP_.png" },
+  pink_card:        { name: "Pink",              template: "Pink.png" },
+  kirby:            { name: "Kirby",             template: "Kirby.png" },
+  purple_thunder:   { name: "Purple Thunder",    template: "Purple_Thunder.png" },
+  silver_card:      { name: "Silver",            template: "Silver.png" },
+  spring_new:       { name: "Spring",            template: "Spring.png" },
+  summer:           { name: "Summer",            template: "Summer.png" },
+  white_marble:     { name: "White Marble",      template: "White_Marble.png" },
+  winter:           { name: "Winter",            template: "Winter.png" },
 };
 
 const CARD_CHOICES = Object.entries(STAMP_CARDS).map(([value, c]) => ({ name: c.name, value }));
@@ -51,12 +80,21 @@ const CARD_CHOICES = Object.entries(STAMP_CARDS).map(([value, c]) => ({ name: c.
 // STAMPS
 // =====================
 const STAMPS = {
-  crown:         { name: "Crown",                file: "Crown Stamp.png" },
-  tbp:           { name: "TBP",                  file: "TBP Stamp.png" },
-  ever_after:    { name: "Ever After Approved",  file: "Ever After Stamp.png" },
-  staff:         { name: "Staff Approved",       file: "Staff Approved.png" },
-  staff_default: { name: "Staff Approved (Default)", file: "Staff Approved (default).png" },
-  villain:       { name: "Ever After Villain",   file: "Ever After Villain Stamp.png" },
+  crown:            { name: "Crown",                    file: "Crown Stamp.png" },
+  tbp:              { name: "TBP",                      file: "TBP Stamp.png" },
+  ever_after:       { name: "Ever After Approved",      file: "Ever After Stamp.png" },
+  staff:            { name: "Staff Approved",           file: "Staff Approved.png" },
+  staff_default:    { name: "Staff Approved (Default)", file: "Staff Approved (default).png" },
+  villain:          { name: "Ever After Villain",       file: "Ever After Villain Stamp.png" },
+  // New stamps
+  black_stamp:      { name: "Black",                    file: "Black_Stamp.png" },
+  board_princess:   { name: "Board Princess",           file: "Board_Princess_Stamp.png" },
+  gold_stamp:       { name: "Gold",                     file: "Gold_Stamp.png" },
+  pink_stamp:       { name: "Pink",                     file: "Pink_Stamp.png" },
+  purple_stamp:     { name: "Purple",                   file: "Purple_Stamp.png" },
+  silver_stamp:     { name: "Silver",                   file: "Silver_Stamp.png" },
+  verified_gold:    { name: "Verified Gold",            file: "Verified_Gold.png" },
+  verified_black:   { name: "Verified Black",           file: "Verified_Black.png" },
 };
 
 const STAMP_CHOICES = Object.entries(STAMPS).map(([value, s]) => ({ name: s.name, value }));
@@ -105,19 +143,157 @@ const POSITIONS_BY_CARD = {
     { cx: 260, cy: 478 }, { cx: 508, cy: 478 }, { cx: 752, cy: 478 }, { cx: 1018, cy: 478 }, { cx: 1276, cy: 478 },
     { cx: 258, cy: 706 }, { cx: 508, cy: 706 }, { cx: 754, cy: 706 }, { cx: 1010, cy: 706 }, { cx: 1266, cy: 706 },
   ],
+  // New cards
+  black_design: [
+    { cx: 257, cy: 448 }, { cx: 505, cy: 448 }, { cx: 753, cy: 448 }, { cx: 1000, cy: 448 }, { cx: 1250, cy: 448 },
+    { cx: 257, cy: 698 }, { cx: 505, cy: 698 }, { cx: 753, cy: 698 }, { cx: 1000, cy: 698 }, { cx: 1250, cy: 698 },
+  ],
+  bubble: [
+    { cx: 271, cy: 425 }, { cx: 497, cy: 425 }, { cx: 734, cy: 425 }, { cx: 964, cy: 425 }, { cx: 1194, cy: 425 },
+    { cx: 271, cy: 650 }, { cx: 497, cy: 650 }, { cx: 734, cy: 650 }, { cx: 964, cy: 650 }, { cx: 1194, cy: 650 },
+  ],
+  fall: [
+    { cx: 249, cy: 505 }, { cx: 476, cy: 505 }, { cx: 685, cy: 505 }, { cx: 922, cy: 505 }, { cx: 1147, cy: 505 },
+    { cx: 249, cy: 755 }, { cx: 476, cy: 755 }, { cx: 685, cy: 755 }, { cx: 922, cy: 755 }, { cx: 1147, cy: 755 },
+  ],
+  flower: [
+    { cx: 244, cy: 495 }, { cx: 491, cy: 495 }, { cx: 738, cy: 495 }, { cx: 981, cy: 495 }, { cx: 1226, cy: 495 },
+    { cx: 244, cy: 705 }, { cx: 491, cy: 705 }, { cx: 738, cy: 705 }, { cx: 981, cy: 705 }, { cx: 1226, cy: 705 },
+  ],
+  furry_friend: [
+    { cx: 258, cy: 455 }, { cx: 505, cy: 455 }, { cx: 754, cy: 455 }, { cx: 1008, cy: 455 }, { cx: 1262, cy: 455 },
+    { cx: 258, cy: 700 }, { cx: 505, cy: 700 }, { cx: 754, cy: 700 }, { cx: 1008, cy: 700 }, { cx: 1262, cy: 700 },
+  ],
+  galaxy: [
+    { cx: 249, cy: 525 }, { cx: 483, cy: 525 }, { cx: 751, cy: 525 }, { cx: 1014, cy: 525 }, { cx: 1271, cy: 525 },
+    { cx: 249, cy: 750 }, { cx: 483, cy: 750 }, { cx: 751, cy: 750 }, { cx: 1014, cy: 750 }, { cx: 1271, cy: 750 },
+  ],
+  inso_by_daisys: [
+    { cx: 258, cy: 440 }, { cx: 505, cy: 440 }, { cx: 754, cy: 440 }, { cx: 1008, cy: 440 }, { cx: 1262, cy: 440 },
+    { cx: 258, cy: 680 }, { cx: 505, cy: 680 }, { cx: 754, cy: 680 }, { cx: 1008, cy: 680 }, { cx: 1262, cy: 680 },
+  ],
+  inspo_by_bi: [
+    { cx: 258, cy: 440 }, { cx: 505, cy: 440 }, { cx: 754, cy: 440 }, { cx: 1008, cy: 440 }, { cx: 1262, cy: 440 },
+    { cx: 258, cy: 680 }, { cx: 505, cy: 680 }, { cx: 754, cy: 680 }, { cx: 1008, cy: 680 }, { cx: 1262, cy: 680 },
+  ],
+  inspo_by_les: [
+    { cx: 258, cy: 430 }, { cx: 505, cy: 430 }, { cx: 754, cy: 430 }, { cx: 1008, cy: 430 }, { cx: 1262, cy: 430 },
+    { cx: 258, cy: 680 }, { cx: 505, cy: 680 }, { cx: 754, cy: 680 }, { cx: 1008, cy: 680 }, { cx: 1262, cy: 680 },
+  ],
+  inspo_by_meows: [
+    { cx: 315, cy: 465 }, { cx: 535, cy: 465 }, { cx: 762, cy: 465 }, { cx: 981, cy: 465 }, { cx: 1213, cy: 465 },
+    { cx: 315, cy: 700 }, { cx: 535, cy: 700 }, { cx: 762, cy: 700 }, { cx: 981, cy: 700 }, { cx: 1213, cy: 700 },
+  ],
+  inspo_by_nonbi: [
+    { cx: 258, cy: 440 }, { cx: 505, cy: 440 }, { cx: 754, cy: 440 }, { cx: 1008, cy: 440 }, { cx: 1262, cy: 440 },
+    { cx: 258, cy: 680 }, { cx: 505, cy: 680 }, { cx: 754, cy: 680 }, { cx: 1008, cy: 680 }, { cx: 1262, cy: 680 },
+  ],
+  inspo_by_pets: [
+    { cx: 315, cy: 450 }, { cx: 540, cy: 450 }, { cx: 765, cy: 450 }, { cx: 993, cy: 450 }, { cx: 1223, cy: 450 },
+    { cx: 315, cy: 690 }, { cx: 540, cy: 690 }, { cx: 765, cy: 690 }, { cx: 993, cy: 690 }, { cx: 1223, cy: 690 },
+  ],
+  inspo_by_pride: [
+    { cx: 258, cy: 440 }, { cx: 505, cy: 440 }, { cx: 754, cy: 440 }, { cx: 1008, cy: 440 }, { cx: 1262, cy: 440 },
+    { cx: 258, cy: 680 }, { cx: 505, cy: 680 }, { cx: 754, cy: 680 }, { cx: 1008, cy: 680 }, { cx: 1262, cy: 680 },
+  ],
+  inspo_by_pups: [
+    { cx: 258, cy: 440 }, { cx: 505, cy: 440 }, { cx: 754, cy: 440 }, { cx: 1008, cy: 440 }, { cx: 1262, cy: 440 },
+    { cx: 258, cy: 680 }, { cx: 505, cy: 680 }, { cx: 754, cy: 680 }, { cx: 1008, cy: 680 }, { cx: 1262, cy: 680 },
+  ],
+  inspo_by_reptiles: [
+    { cx: 258, cy: 440 }, { cx: 505, cy: 440 }, { cx: 754, cy: 440 }, { cx: 1008, cy: 440 }, { cx: 1262, cy: 440 },
+    { cx: 258, cy: 680 }, { cx: 505, cy: 680 }, { cx: 754, cy: 680 }, { cx: 1008, cy: 680 }, { cx: 1262, cy: 680 },
+  ],
+  inspo_by_trans: [
+    { cx: 258, cy: 440 }, { cx: 505, cy: 440 }, { cx: 754, cy: 440 }, { cx: 1008, cy: 440 }, { cx: 1262, cy: 440 },
+    { cx: 258, cy: 680 }, { cx: 505, cy: 680 }, { cx: 754, cy: 680 }, { cx: 1008, cy: 680 }, { cx: 1262, cy: 680 },
+  ],
+  nebula: [
+    { cx: 237, cy: 455 }, { cx: 501, cy: 455 }, { cx: 755, cy: 455 }, { cx: 1010, cy: 455 }, { cx: 1265, cy: 455 },
+    { cx: 237, cy: 700 }, { cx: 501, cy: 700 }, { cx: 755, cy: 700 }, { cx: 1010, cy: 700 }, { cx: 1265, cy: 700 },
+  ],
+  neon_purple: [
+    { cx: 258, cy: 475 }, { cx: 510, cy: 475 }, { cx: 766, cy: 475 }, { cx: 1022, cy: 475 }, { cx: 1278, cy: 475 },
+    { cx: 258, cy: 725 }, { cx: 510, cy: 725 }, { cx: 766, cy: 725 }, { cx: 1022, cy: 725 }, { cx: 1278, cy: 725 },
+  ],
+  og_tbp: [
+    { cx: 223, cy: 430 }, { cx: 452, cy: 430 }, { cx: 697, cy: 430 }, { cx: 931, cy: 430 }, { cx: 1175, cy: 430 },
+    { cx: 223, cy: 680 }, { cx: 452, cy: 680 }, { cx: 697, cy: 680 }, { cx: 931, cy: 680 }, { cx: 1175, cy: 680 },
+  ],
+  pink_card: [
+    { cx: 258, cy: 445 }, { cx: 505, cy: 445 }, { cx: 754, cy: 445 }, { cx: 1008, cy: 445 }, { cx: 1262, cy: 445 },
+    { cx: 258, cy: 680 }, { cx: 505, cy: 680 }, { cx: 754, cy: 680 }, { cx: 1008, cy: 680 }, { cx: 1262, cy: 680 },
+  ],
+  kirby: [
+    { cx: 166, cy: 412 }, { cx: 421, cy: 412 }, { cx: 670, cy: 412 }, { cx: 915, cy: 412 }, { cx: 1158, cy: 412 },
+    { cx: 166, cy: 655 }, { cx: 421, cy: 655 }, { cx: 670, cy: 655 }, { cx: 915, cy: 655 }, { cx: 1158, cy: 655 },
+  ],
+  purple_thunder: [
+    { cx: 290, cy: 421 }, { cx: 512, cy: 421 }, { cx: 738, cy: 421 }, { cx: 963, cy: 421 }, { cx: 1190, cy: 421 },
+    { cx: 290, cy: 646 }, { cx: 512, cy: 646 }, { cx: 738, cy: 646 }, { cx: 963, cy: 646 }, { cx: 1190, cy: 646 },
+  ],
+  silver_card: [
+    { cx: 233, cy: 406 }, { cx: 490, cy: 406 }, { cx: 745, cy: 406 }, { cx: 1002, cy: 406 }, { cx: 1259, cy: 406 },
+    { cx: 233, cy: 640 }, { cx: 490, cy: 640 }, { cx: 745, cy: 640 }, { cx: 1002, cy: 640 }, { cx: 1259, cy: 640 },
+  ],
+  spring_new: [
+    { cx: 319, cy: 442 }, { cx: 532, cy: 442 }, { cx: 747, cy: 442 }, { cx: 957, cy: 442 }, { cx: 1183, cy: 442 },
+    { cx: 319, cy: 700 }, { cx: 532, cy: 700 }, { cx: 747, cy: 700 }, { cx: 957, cy: 700 }, { cx: 1183, cy: 700 },
+  ],
+  summer: [
+    { cx: 227, cy: 445 }, { cx: 473, cy: 445 }, { cx: 731, cy: 445 }, { cx: 983, cy: 445 }, { cx: 1241, cy: 445 },
+    { cx: 227, cy: 660 }, { cx: 473, cy: 660 }, { cx: 731, cy: 660 }, { cx: 983, cy: 660 }, { cx: 1241, cy: 660 },
+  ],
+  white_marble: [
+    { cx: 298, cy: 537 }, { cx: 527, cy: 537 }, { cx: 763, cy: 537 }, { cx: 997, cy: 537 }, { cx: 1229, cy: 537 },
+    { cx: 298, cy: 729 }, { cx: 527, cy: 729 }, { cx: 763, cy: 729 }, { cx: 997, cy: 729 }, { cx: 1229, cy: 729 },
+  ],
+  winter: [
+    { cx: 240, cy: 445 }, { cx: 490, cy: 445 }, { cx: 745, cy: 445 }, { cx: 1000, cy: 445 }, { cx: 1255, cy: 445 },
+    { cx: 240, cy: 685 }, { cx: 490, cy: 685 }, { cx: 745, cy: 685 }, { cx: 1000, cy: 685 }, { cx: 1255, cy: 685 },
+  ],
 };
 
 const STAMP_SIZE_BY_CARD = {
-  og:      90,
-  pink:    128,
-  black:   130,
-  beige:   130,
-  marbled: 130,
-  tbpcard: 135,
-  spring:  150,
-  vibe:    140,
-  dice:    190,
-  neon:    160,
+  // Original cards
+  og:               90,
+  pink:             128,
+  black:            130,
+  beige:            130,
+  marbled:          130,
+  tbpcard:          135,
+  spring:           150,
+  vibe:             140,
+  dice:             190,
+  neon:             160,
+  // New cards
+  black_design:     200,
+  bubble:           175,
+  fall:             175,
+  flower:           175,
+  furry_friend:     185,
+  galaxy:           185,
+  inso_by_daisys:   185,
+  inspo_by_bi:      185,
+  inspo_by_les:     185,
+  inspo_by_meows:   200,
+  inspo_by_nonbi:   185,
+  inspo_by_pets:    185,
+  inspo_by_pride:   185,
+  inspo_by_pups:    185,
+  inspo_by_reptiles:185,
+  inspo_by_trans:   185,
+  nebula:           180,
+  neon_purple:      185,
+  og_tbp:           185,
+  pink_card:        185,
+  kirby:            220,
+  purple_thunder:   175,
+  silver_card:      185,
+  spring_new:       175,
+  summer:           190,
+  white_marble:     170,
+  winter:           200,
 };
 
 // =====================
@@ -166,6 +342,13 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS staff_stamps (
       guild_id TEXT, user_id TEXT, stamp_id TEXT,
       PRIMARY KEY (guild_id, user_id)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS guild_settings (
+      guild_id TEXT PRIMARY KEY,
+      log_channel_id TEXT,
+      completed_channel_id TEXT
     )
   `);
   console.log("✅ Database tables ready.");
@@ -274,6 +457,28 @@ async function getLeaderboard(guildId) {
 }
 
 // =====================
+// GUILD SETTINGS
+// =====================
+async function getGuildSettings(guildId) {
+  const res = await pool.query("SELECT * FROM guild_settings WHERE guild_id=$1", [guildId]);
+  return res.rows[0] || null;
+}
+async function setGuildChannel(guildId, type, channelId) {
+  const col = type === "log" ? "log_channel_id" : "completed_channel_id";
+  await pool.query(
+    `INSERT INTO guild_settings (guild_id, ${col}) VALUES ($1, $2)
+     ON CONFLICT (guild_id) DO UPDATE SET ${col}=EXCLUDED.${col}`,
+    [guildId, channelId]
+  );
+}
+async function resolveChannel(guildId, type) {
+  // DB setting takes priority over env var
+  const settings = await getGuildSettings(guildId);
+  if (type === "log") return settings?.log_channel_id || STAMP_LOG_CHANNEL_ID || "";
+  return settings?.completed_channel_id || STAMP_COMPLETED_CHANNEL_ID || "";
+}
+
+// =====================
 // DISCORD CLIENT
 // =====================
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -349,6 +554,19 @@ const commands = [
     )
     .addSubcommand((s) =>
       s.setName("resetall").setDescription("Reset ALL stamp cards in this server (admin/owner only)")
+    )
+    .addSubcommand((s) =>
+      s.setName("setchannel").setDescription("Set the log or completed channel (admin only)")
+        .addStringOption((o) =>
+          o.setName("type").setDescription("Which channel to set?").setRequired(true)
+            .addChoices(
+              { name: "📋 Stamp Log", value: "log" },
+              { name: "🎉 Completed Cards", value: "completed" }
+            )
+        )
+        .addChannelOption((o) =>
+          o.setName("channel").setDescription("The channel to use").setRequired(true)
+        )
     ),
 ].map((c) => c.toJSON());
 
@@ -401,9 +619,10 @@ async function sendToChannel(channelId, payload) {
 }
 
 async function logStampWithImage({ interaction, targetUser, cardId, stampId, action, count }) {
-  if (!STAMP_LOG_CHANNEL_ID) return;
+  const logChannelId = await resolveChannel(interaction.guildId, "log");
+  if (!logChannelId) return;
   const buffer = await renderStampCard(cardId, count, stampId);
-  await sendToChannel(STAMP_LOG_CHANNEL_ID, {
+  await sendToChannel(logChannelId, {
     content:
       `## <:receipts:1488760952924143616> Stamp Transcript\n` +
       `<:BULLET:1488760457073524947> **Member:** ${targetUser}\n` +
@@ -418,9 +637,10 @@ async function logStampWithImage({ interaction, targetUser, cardId, stampId, act
 }
 
 async function postCompletedWithImage({ interaction, targetUser, cardId, stampId, count, cardNumber }) {
-  if (!STAMP_COMPLETED_CHANNEL_ID) return;
+  const completedChannelId = await resolveChannel(interaction.guildId, "completed");
+  if (!completedChannelId) return;
   const buffer = await renderStampCard(cardId, count, stampId);
-  await sendToChannel(STAMP_COMPLETED_CHANNEL_ID, {
+  await sendToChannel(completedChannelId, {
     content:
       `## <a:8720rainbowconfetti:1488749313130762383> STAMP CARD COMPLETED! <a:8720rainbowconfetti:1488749313130762383>\n` +
       `<a:2313purplecrown:1488749776571863091> **Member:** ${targetUser}\n` +
@@ -433,8 +653,9 @@ async function postCompletedWithImage({ interaction, targetUser, cardId, stampId
 }
 
 async function logResetAll({ interaction }) {
-  if (!STAMP_LOG_CHANNEL_ID) return;
-  await sendToChannel(STAMP_LOG_CHANNEL_ID, {
+  const logChannelId = await resolveChannel(interaction.guildId, "log");
+  if (!logChannelId) return;
+  await sendToChannel(logChannelId, {
     content:
       `## <:receipts:1488760952924143616> Stamp System Reset (ALL)\n` +
       `<:BULLET:1488760457073524947> **Action:** RESET ALL\n` +
@@ -646,6 +867,19 @@ client.on("interactionCreate", async (interaction) => {
       await resetAll(guildId);
       await logResetAll({ interaction });
       return interaction.reply("♻️ **Server reset complete.** All stamp cards are back to **0**.");
+    }
+
+    // ===== SETCHANNEL =====
+    if (sub === "setchannel") {
+      const isOwner = interaction.guild.ownerId === interaction.user.id;
+      const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
+      if (!isOwner && !isAdmin) return interaction.reply({ content: "❌ Only the server owner or admins can set channels.", ephemeral: true });
+      const type = interaction.options.getString("type", true);
+      const channel = interaction.options.getChannel("channel", true);
+      if (!channel.isTextBased()) return interaction.reply({ content: "❌ Please select a text channel.", ephemeral: true });
+      await setGuildChannel(guildId, type, channel.id);
+      const label = type === "log" ? "📋 Stamp Log" : "🎉 Completed Cards";
+      return interaction.reply({ content: `✅ **${label}** channel set to ${channel}.`, ephemeral: true });
     }
 
     // ===== ADD / REMOVE / RESET =====
