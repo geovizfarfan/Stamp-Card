@@ -24,7 +24,7 @@ const STAMP_LOG_CHANNEL_ID = process.env.STAMP_LOG_CHANNEL_ID || "";
 const STAMP_COMPLETED_CHANNEL_ID = process.env.STAMP_COMPLETED_CHANNEL_ID || "";
 const STAMP_GOAL = Number(process.env.STAMP_GOAL || 10);
 
-if (!TOKEN || !GUILD_ID || !REWARD_ROLE_ID) {
+if (!TOKEN || !REWARD_ROLE_ID) {
   console.error("Missing required env vars.");
   process.exit(1);
 }
@@ -518,8 +518,8 @@ const commands = [
 client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
   const rest = new REST({ version: "10" }).setToken(TOKEN);
-  await rest.put(Routes.applicationGuildCommands(client.user.id, GUILD_ID), { body: commands });
-  console.log("Slash commands registered");
+  await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
+  console.log("Slash commands registered globally");
 });
 
 // =====================
