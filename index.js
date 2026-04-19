@@ -63,6 +63,8 @@ const STAMP_CARDS = {
 };
 
 const CARD_CHOICES = Object.entries(STAMP_CARDS).map(([value, c]) => ({ name: c.name, value }));
+const CARD_CHOICES_A = CARD_CHOICES.slice(0, 14);  // Black Design → Inspo by Non-Bi
+const CARD_CHOICES_B = CARD_CHOICES.slice(14);      // Inspo by Pets → Winter
 
 // =====================
 // STAMPS
@@ -433,9 +435,16 @@ const commands = [
         .addUserOption((o) => o.setName("user").setDescription("User (optional)"))
     )
     .addSubcommand((s) =>
-      s.setName("setcard").setDescription("Choose a stamp card design (managers can set for other users too)")
+      s.setName("setcard").setDescription("Choose a stamp card design A–N (managers can set for other users too)")
         .addStringOption((o) =>
-          o.setName("card").setDescription("Which card design?").setRequired(true).addChoices(...CARD_CHOICES)
+          o.setName("card").setDescription("Which card design?").setRequired(true).addChoices(...CARD_CHOICES_A)
+        )
+        .addUserOption((o) => o.setName("user").setDescription("Set card for this user (managers only)"))
+    )
+    .addSubcommand((s) =>
+      s.setName("setcard2").setDescription("Choose a stamp card design O–W (managers can set for other users too)")
+        .addStringOption((o) =>
+          o.setName("card").setDescription("Which card design?").setRequired(true).addChoices(...CARD_CHOICES_B)
         )
         .addUserOption((o) => o.setName("user").setDescription("Set card for this user (managers only)"))
     )
@@ -456,7 +465,10 @@ const commands = [
       s.setName("reset").setDescription("Reset a user's stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
         .addStringOption((o) =>
-          o.setName("card").setDescription("Switch to a new card design after reset (optional)").addChoices(...CARD_CHOICES)
+          o.setName("card").setDescription("Switch to a new card A–N after reset (optional)").addChoices(...CARD_CHOICES_A)
+        )
+        .addStringOption((o) =>
+          o.setName("card2").setDescription("Switch to a new card O–W after reset (optional)").addChoices(...CARD_CHOICES_B)
         )
     )
     .addSubcommand((s) =>
@@ -741,7 +753,7 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     // ===== SETCARD =====
-    if (sub === "setcard") {
+    if (sub === "setcard" || sub === "setcard2") {
       const cardId = interaction.options.getString("card", true);
       const targetUser = interaction.options.getUser("user");
       if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Unknown card choice.", ephemeral: true });
@@ -829,7 +841,7 @@ client.on("interactionCreate", async (interaction) => {
       if (sub === "reset") {
         const current = await getCount(guildId, targetUser.id, cardId);
         await resetUser(guildId, targetUser.id, cardId);
-        const newCardId = interaction.options.getString("card");
+        const newCardId = interaction.options.getString("card") || interaction.options.getString("card2");
         if (newCardId && STAMP_CARDS[newCardId]) await setCard(guildId, targetUser.id, newCardId);
         const activeCardId = newCardId && STAMP_CARDS[newCardId] ? newCardId : cardId;
         const cardSwitchNote = newCardId && STAMP_CARDS[newCardId] ? ` Their card has been switched to **${STAMP_CARDS[newCardId].name}**.` : "";
