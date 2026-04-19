@@ -280,9 +280,13 @@ async function initDB() {
     CREATE TABLE IF NOT EXISTS guild_settings (
       guild_id TEXT PRIMARY KEY,
       log_channel_id TEXT,
-      completed_channel_id TEXT
+      completed_channel_id TEXT,
+      manager_role_id TEXT,
+      reward_role_id TEXT
     )
   `);
+  await pool.query(`ALTER TABLE guild_settings ADD COLUMN IF NOT EXISTS manager_role_id TEXT`);
+  await pool.query(`ALTER TABLE guild_settings ADD COLUMN IF NOT EXISTS reward_role_id TEXT`);
   console.log("✅ Database tables ready.");
 }
 
@@ -403,11 +407,26 @@ async function setGuildChannel(guildId, type, channelId) {
     [guildId, channelId]
   );
 }
+async function setGuildRole(guildId, type, roleId) {
+  const col = type === "manager" ? "manager_role_id" : "reward_role_id";
+  await pool.query(
+    `INSERT INTO guild_settings (guild_id, ${col}) VALUES ($1, $2)
+     ON CONFLICT (guild_id) DO UPDATE SET ${col}=EXCLUDED.${col}`,
+    [guildId, roleId]
+  );
+}
 async function resolveChannel(guildId, type) {
-  // DB setting takes priority over env var
   const settings = await getGuildSettings(guildId);
   if (type === "log") return settings?.log_channel_id || STAMP_LOG_CHANNEL_ID || "";
   return settings?.completed_channel_id || STAMP_COMPLETED_CHANNEL_ID || "";
+}
+async function resolveRewardRole(guildId) {
+  const settings = await getGuildSettings(guildId);
+  return settings?.reward_role_id || REWARD_ROLE_ID || "";
+}
+async function resolveManagerRole(guildId) {
+  const settings = await getGuildSettings(guildId);
+  return settings?.manager_role_id || MOD_ROLE_ID || "";
 }
 
 // =====================
@@ -508,6 +527,19 @@ const commands = [
         )
         .addChannelOption((o) =>
           o.setName("channel").setDescription("The channel to use").setRequired(true)
+        )
+    )
+    .addSubcommand((s) =>
+      s.setName("setup").setDescription("Configure the bot for this server (admin only)")
+        .addStringOption((o) =>
+          o.setName("type").setDescription("What to configure?").setRequired(true)
+            .addChoices(
+              { name: "🛡️ Manager Role (can add/remove stamps)", value: "manager" },
+              { name: "🏆 Reward Role (given on card completion)", value: "reward" }
+            )
+        )
+        .addRoleOption((o) =>
+          o.setName("role").setDescription("The role to assign").setRequired(true)
         )
     ),
 ].map((c) => c.toJSON());
@@ -611,12 +643,14 @@ async function logResetAll({ interaction }) {
 // =====================
 // PERMISSIONS
 // =====================
-function canManage(interaction) {
+async function canManage(interaction) {
   const isOwner = interaction.guild.ownerId === interaction.user.id;
   const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
   const member = interaction.member;
   const roleIds = member?.roles?.cache ? [...member.roles.cache.keys()] : Array.isArray(member?.roles) ? member.roles : [];
-  const hasManagerRole = (MOD_ROLE_ID && roleIds.includes(MOD_ROLE_ID)) || STAMP_MANAGER_ROLE_IDS.some((id) => roleIds.includes(id));
+  const dbManagerRole = await resolveManagerRole(interaction.guildId);
+  const hasManagerRole = (dbManagerRole && roleIds.includes(dbManagerRole)) ||
+    STAMP_MANAGER_ROLE_IDS.some((id) => roleIds.includes(id));
   return Boolean(isOwner || isAdmin || hasManagerRole);
 }
 
@@ -694,7 +728,7 @@ client.on("interactionCreate", async (interaction) => {
 
     // ===== DELETE COMPLETED =====
     if (sub === "deletecompleted") {
-      if (!canManage(interaction)) return interaction.reply({ content: "❌ You don't have permission to do this.", ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to do this.", ephemeral: true });
       const targetUser = interaction.options.getUser("user", true);
       const cardNumber = interaction.options.getInteger("card", true);
 
@@ -715,7 +749,7 @@ client.on("interactionCreate", async (interaction) => {
 
     // ===== CLAIM =====
     if (sub === "claim") {
-      if (!canManage(interaction)) return interaction.reply({ content: "❌ You don't have permission to mark claims.", ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to mark claims.", ephemeral: true });
       const targetUser = interaction.options.getUser("user", true);
       const cardNumber = interaction.options.getInteger("card", true);
       const status = interaction.options.getString("status", true);
@@ -740,7 +774,7 @@ client.on("interactionCreate", async (interaction) => {
 
     // ===== SETSTAMP =====
     if (sub === "setstamp") {
-      if (!canManage(interaction)) {
+      if (!(await canManage(interaction))) {
         return interaction.reply({ content: "❌ Only managers can set a stamp preference.", ephemeral: true });
       }
       const stampId = interaction.options.getString("design", true);
@@ -761,7 +795,7 @@ client.on("interactionCreate", async (interaction) => {
       const userId = (targetUser && targetUser.id !== interaction.user.id) ? targetUser.id : interaction.user.id;
       const isOther = targetUser && targetUser.id !== interaction.user.id;
 
-      if (isOther && !canManage(interaction)) {
+      if (isOther && !(await canManage(interaction))) {
         return interaction.reply({ content: "❌ You don't have permission to set another member's card.", ephemeral: true });
       }
 
@@ -824,9 +858,21 @@ client.on("interactionCreate", async (interaction) => {
       return interaction.reply({ content: `✅ **${label}** channel set to ${channel}.`, ephemeral: true });
     }
 
+    // ===== SETUP =====
+    if (sub === "setup") {
+      const isOwner = interaction.guild.ownerId === interaction.user.id;
+      const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
+      if (!isOwner && !isAdmin) return interaction.reply({ content: "❌ Only the server owner or admins can configure the bot.", ephemeral: true });
+      const type = interaction.options.getString("type", true);
+      const role = interaction.options.getRole("role", true);
+      await setGuildRole(guildId, type, role.id);
+      const label = type === "manager" ? "🛡️ Manager Role" : "🏆 Reward Role";
+      return interaction.reply({ content: `✅ **${label}** set to ${role}. Staff with this role can now manage stamps.`, ephemeral: true });
+    }
+
     // ===== ADD / REMOVE / RESET =====
     if (sub === "add" || sub === "remove" || sub === "reset") {
-      if (!canManage(interaction)) return interaction.reply({ content: "❌ You don't have permission to manage stamps.", ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to manage stamps.", ephemeral: true });
       await interaction.deferReply();
 
       const targetUser = interaction.options.getUser("user", true);
@@ -845,7 +891,8 @@ client.on("interactionCreate", async (interaction) => {
         if (newCardId && STAMP_CARDS[newCardId]) await setCard(guildId, targetUser.id, newCardId);
         const activeCardId = newCardId && STAMP_CARDS[newCardId] ? newCardId : cardId;
         const cardSwitchNote = newCardId && STAMP_CARDS[newCardId] ? ` Their card has been switched to **${STAMP_CARDS[newCardId].name}**.` : "";
-        if (targetMember.roles.cache.has(REWARD_ROLE_ID)) await targetMember.roles.remove(REWARD_ROLE_ID).catch(() => {});
+        const rewardRoleId = await resolveRewardRole(guildId);
+        if (rewardRoleId && targetMember.roles.cache.has(rewardRoleId)) await targetMember.roles.remove(rewardRoleId).catch(() => {});
         await logStampWithImage({
           interaction, targetUser, cardId: activeCardId, stampId: "black_stamp",
           action: `♻️ Reset (was ${current})${newCardId && STAMP_CARDS[newCardId] ? ` → switched to ${STAMP_CARDS[newCardId].name}` : ""}`,
@@ -860,6 +907,7 @@ client.on("interactionCreate", async (interaction) => {
       const next = sub === "add" ? current + amount : Math.max(0, current - amount);
       const overrideStamp = interaction.options.getString("design");
       const stampId = overrideStamp || await getStaffStamp(guildId, interaction.user.id);
+      const rewardRoleId = await resolveRewardRole(guildId);
 
       await upsertCount(guildId, targetUser.id, cardId, next);
       await setStamp(guildId, targetUser.id, stampId);
@@ -872,10 +920,9 @@ client.on("interactionCreate", async (interaction) => {
         await insertCompleted(guildId, targetUser.id, cardId, cardNumber);
         await postCompletedWithImage({ interaction, targetUser, cardId, stampId, count: STAMP_GOAL, cardNumber });
         await deleteCount(guildId, targetUser.id, cardId);
-        if (!targetMember.roles.cache.has(REWARD_ROLE_ID)) await targetMember.roles.add(REWARD_ROLE_ID).catch(() => {});
+        if (rewardRoleId && !targetMember.roles.cache.has(rewardRoleId)) await targetMember.roles.add(rewardRoleId).catch(() => {});
         await logStampWithImage({ interaction, targetUser, cardId, stampId, action: `🏅 Card #${cardNumber} COMPLETED & reset for next card`, count: STAMP_GOAL });
 
-        // Carry over overflow stamps to new card
         if (overflow > 0) {
           await upsertCount(guildId, targetUser.id, cardId, overflow);
         }
@@ -886,8 +933,8 @@ client.on("interactionCreate", async (interaction) => {
         );
       }
 
-      if (next >= STAMP_GOAL && !targetMember.roles.cache.has(REWARD_ROLE_ID)) await targetMember.roles.add(REWARD_ROLE_ID).catch(() => {});
-      if (next < STAMP_GOAL && targetMember.roles.cache.has(REWARD_ROLE_ID)) await targetMember.roles.remove(REWARD_ROLE_ID).catch(() => {});
+      if (rewardRoleId && next >= STAMP_GOAL && !targetMember.roles.cache.has(rewardRoleId)) await targetMember.roles.add(rewardRoleId).catch(() => {});
+      if (rewardRoleId && next < STAMP_GOAL && targetMember.roles.cache.has(rewardRoleId)) await targetMember.roles.remove(rewardRoleId).catch(() => {});
 
       await logStampWithImage({
         interaction, targetUser, cardId, stampId,
