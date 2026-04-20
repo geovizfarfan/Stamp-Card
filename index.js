@@ -899,11 +899,11 @@ client.on("interactionCreate", async (interaction) => {
 
       const targetUser = interaction.options.getUser("user", true);
       const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      if (!targetMember) return interaction.reply({ content: "❌ I can't find that member in this server.", ephemeral: true });
+      if (!targetMember) return interaction.editReply({ content: "❌ I can't find that member in this server." });
 
       const savedCard = await getCard(guildId, targetUser.id);
       const cardId = savedCard?.card_id || savedCard || "og";
-      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`.", ephemeral: true });
+      if (!STAMP_CARDS[cardId]) return interaction.editReply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`." });
 
       // RESET
       if (sub === "reset") {
