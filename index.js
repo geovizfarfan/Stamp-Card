@@ -57,9 +57,6 @@ const STAMP_CARDS = {
   kirby_meadow:     { name: "Kirby Meadow",      template: "Kirby_2.png" },
   kirby_rainbow:    { name: "Kirby Rainbow",     template: "Kirby_3.png" },
   kirby_neon:       { name: "Kirby Neon",        template: "Kirby_4.png" },
-  kirby_meadow:     { name: "Kirby Meadow",      template: "Kirby_2.png" },
-  kirby_rainbow:    { name: "Kirby Rainbow",     template: "Kirby_3.png" },
-  kirby_neon:       { name: "Kirby Neon",        template: "Kirby_4.png" },
   purple_thunder:   { name: "Purple Thunder",    template: "Purple_Thunder.png" },
   silver_card:      { name: "Silver",            template: "Silver.png" },
   spring_new:       { name: "Spring",            template: "Spring.png" },
@@ -93,161 +90,158 @@ const STAMP_CHOICES = Object.entries(STAMPS).map(([value, s]) => ({ name: s.name
 // =====================
 const POSITIONS_BY_CARD = {
   black_design: [
-    { cx: 262, cy: 405 }, { cx: 492, cy: 405 }, { cx: 738, cy: 405 }, { cx: 1004, cy: 405 }, { cx: 1254, cy: 405 },
-    { cx: 262, cy: 633 }, { cx: 492, cy: 633 }, { cx: 738, cy: 633 }, { cx: 1004, cy: 633 }, { cx: 1254, cy: 633 },
+    { cx: 257, cy: 404 }, { cx: 498, cy: 404 }, { cx: 757, cy: 404 }, { cx: 994, cy: 404 }, { cx: 1244, cy: 404 },
+    { cx: 257, cy: 634 }, { cx: 498, cy: 634 }, { cx: 757, cy: 634 }, { cx: 994, cy: 634 }, { cx: 1242, cy: 634 },
   ],
   bubble: [
-    { cx: 271, cy: 425 }, { cx: 497, cy: 425 }, { cx: 734, cy: 425 }, { cx: 964, cy: 425 }, { cx: 1194, cy: 425 },
-    { cx: 271, cy: 650 }, { cx: 497, cy: 650 }, { cx: 734, cy: 650 }, { cx: 964, cy: 650 }, { cx: 1194, cy: 650 },
+    { cx: 274, cy: 419 }, { cx: 500, cy: 419 }, { cx: 736, cy: 419 }, { cx: 966, cy: 419 }, { cx: 1200, cy: 419 },
+    { cx: 274, cy: 644 }, { cx: 496, cy: 644 }, { cx: 734, cy: 644 }, { cx: 968, cy: 644 }, { cx: 1198, cy: 644 },
   ],
   fall: [
-    { cx: 249, cy: 430 }, { cx: 476, cy: 430 }, { cx: 685, cy: 430 }, { cx: 922, cy: 430 }, { cx: 1147, cy: 430 },
-    { cx: 249, cy: 650 }, { cx: 476, cy: 650 }, { cx: 685, cy: 650 }, { cx: 922, cy: 650 }, { cx: 1147, cy: 650 },
+    { cx: 242, cy: 422 }, { cx: 472, cy: 422 }, { cx: 696, cy: 422 }, { cx: 924, cy: 422 }, { cx: 1150, cy: 422 },
+    { cx: 252, cy: 640 }, { cx: 466, cy: 640 }, { cx: 700, cy: 640 }, { cx: 930, cy: 640 }, { cx: 1138, cy: 640 },
   ],
   flower: [
-    { cx: 246, cy: 420 }, { cx: 488, cy: 420 }, { cx: 740, cy: 420 }, { cx: 978, cy: 420 }, { cx: 1226, cy: 420 },
-    { cx: 246, cy: 632 }, { cx: 488, cy: 632 }, { cx: 740, cy: 632 }, { cx: 978, cy: 632 }, { cx: 1226, cy: 632 },
+    { cx: 246, cy: 419 }, { cx: 488, cy: 419 }, { cx: 740, cy: 419 }, { cx: 978, cy: 419 }, { cx: 1228, cy: 419 },
+    { cx: 242, cy: 625 }, { cx: 492, cy: 625 }, { cx: 742, cy: 625 }, { cx: 986, cy: 625 }, { cx: 1228, cy: 625 },
   ],
   furry_friend: [
-    { cx: 258, cy: 424 }, { cx: 502, cy: 424 }, { cx: 744, cy: 424 }, { cx: 990, cy: 424 }, { cx: 1230, cy: 424 },
-    { cx: 258, cy: 658 }, { cx: 502, cy: 658 }, { cx: 744, cy: 658 }, { cx: 990, cy: 658 }, { cx: 1230, cy: 658 },
+    { cx: 252, cy: 425 }, { cx: 504, cy: 425 }, { cx: 744, cy: 425 }, { cx: 986, cy: 425 }, { cx: 1230, cy: 425 },
+    { cx: 260, cy: 659 }, { cx: 502, cy: 659 }, { cx: 746, cy: 659 }, { cx: 990, cy: 659 }, { cx: 1226, cy: 659 },
   ],
   galaxy: [
-    { cx: 249, cy: 465 }, { cx: 483, cy: 465 }, { cx: 751, cy: 465 }, { cx: 1014, cy: 465 }, { cx: 1271, cy: 465 },
-    { cx: 249, cy: 695 }, { cx: 483, cy: 695 }, { cx: 751, cy: 695 }, { cx: 1014, cy: 695 }, { cx: 1271, cy: 695 },
+    { cx: 250, cy: 456 }, { cx: 484, cy: 456 }, { cx: 752, cy: 456 }, { cx: 1012, cy: 456 }, { cx: 1262, cy: 456 },
+    { cx: 250, cy: 680 }, { cx: 482, cy: 680 }, { cx: 752, cy: 680 }, { cx: 1012, cy: 680 }, { cx: 1268, cy: 680 },
   ],
   inso_by_daisys: [
-    { cx: 310, cy: 435 }, { cx: 524, cy: 435 }, { cx: 746, cy: 435 }, { cx: 968, cy: 435 }, { cx: 1186, cy: 435 },
-    { cx: 310, cy: 655 }, { cx: 524, cy: 655 }, { cx: 746, cy: 655 }, { cx: 968, cy: 655 }, { cx: 1186, cy: 655 },
+    { cx: 312, cy: 432 }, { cx: 522, cy: 432 }, { cx: 746, cy: 432 }, { cx: 968, cy: 432 }, { cx: 1186, cy: 432 },
+    { cx: 312, cy: 653 }, { cx: 522, cy: 653 }, { cx: 748, cy: 653 }, { cx: 966, cy: 653 }, { cx: 1184, cy: 653 },
   ],
   inspo_by_bi: [
-    { cx: 246, cy: 428 }, { cx: 482, cy: 428 }, { cx: 736, cy: 428 }, { cx: 994, cy: 428 }, { cx: 1236, cy: 428 },
-    { cx: 246, cy: 655 }, { cx: 482, cy: 655 }, { cx: 736, cy: 655 }, { cx: 994, cy: 655 }, { cx: 1236, cy: 655 },
+    { cx: 238, cy: 427 }, { cx: 482, cy: 427 }, { cx: 736, cy: 427 }, { cx: 981, cy: 427 }, { cx: 1236, cy: 427 },
+    { cx: 238, cy: 656 }, { cx: 486, cy: 656 }, { cx: 736, cy: 656 }, { cx: 981, cy: 656 }, { cx: 1236, cy: 656 },
   ],
   inspo_by_les: [
-    { cx: 246, cy: 406 }, { cx: 502, cy: 406 }, { cx: 748, cy: 406 }, { cx: 986, cy: 406 }, { cx: 1240, cy: 406 },
-    { cx: 246, cy: 654 }, { cx: 502, cy: 654 }, { cx: 748, cy: 654 }, { cx: 986, cy: 654 }, { cx: 1240, cy: 654 },
+    { cx: 250, cy: 406 }, { cx: 502, cy: 406 }, { cx: 740, cy: 406 }, { cx: 996, cy: 406 }, { cx: 1230, cy: 406 },
+    { cx: 256, cy: 655 }, { cx: 494, cy: 655 }, { cx: 754, cy: 655 }, { cx: 986, cy: 655 }, { cx: 1246, cy: 655 },
   ],
   inspo_by_meows: [
-    { cx: 315, cy: 385 }, { cx: 535, cy: 385 }, { cx: 762, cy: 385 }, { cx: 981, cy: 385 }, { cx: 1213, cy: 385 },
-    { cx: 315, cy: 620 }, { cx: 535, cy: 620 }, { cx: 762, cy: 620 }, { cx: 981, cy: 620 }, { cx: 1213, cy: 620 },
+    { cx: 302, cy: 392 }, { cx: 528, cy: 392 }, { cx: 764, cy: 392 }, { cx: 983, cy: 392 }, { cx: 1207, cy: 392 },
+    { cx: 304, cy: 611 }, { cx: 528, cy: 611 }, { cx: 764, cy: 611 }, { cx: 983, cy: 611 }, { cx: 1207, cy: 611 },
   ],
   inspo_by_nonbi: [
-    { cx: 282, cy: 415 }, { cx: 508, cy: 415 }, { cx: 756, cy: 415 }, { cx: 994, cy: 415 }, { cx: 1260, cy: 415 },
-    { cx: 282, cy: 638 }, { cx: 508, cy: 638 }, { cx: 756, cy: 638 }, { cx: 994, cy: 638 }, { cx: 1260, cy: 638 },
+    { cx: 276, cy: 414 }, { cx: 510, cy: 414 }, { cx: 752, cy: 414 }, { cx: 998, cy: 414 }, { cx: 1254, cy: 414 },
+    { cx: 276, cy: 640 }, { cx: 512, cy: 640 }, { cx: 760, cy: 640 }, { cx: 1006, cy: 640 }, { cx: 1254, cy: 640 },
   ],
   inspo_by_pets: [
-    { cx: 315, cy: 420 }, { cx: 540, cy: 420 }, { cx: 765, cy: 420 }, { cx: 993, cy: 420 }, { cx: 1223, cy: 420 },
-    { cx: 315, cy: 640 }, { cx: 540, cy: 640 }, { cx: 765, cy: 640 }, { cx: 993, cy: 640 }, { cx: 1223, cy: 640 },
+    { cx: 304, cy: 423 }, { cx: 540, cy: 423 }, { cx: 764, cy: 423 }, { cx: 986, cy: 423 }, { cx: 1222, cy: 423 },
+    { cx: 312, cy: 647 }, { cx: 540, cy: 647 }, { cx: 766, cy: 647 }, { cx: 990, cy: 647 }, { cx: 1218, cy: 647 },
   ],
   inspo_by_pride: [
-    { cx: 288, cy: 420 }, { cx: 520, cy: 420 }, { cx: 754, cy: 420 }, { cx: 988, cy: 420 }, { cx: 1232, cy: 420 },
-    { cx: 288, cy: 640 }, { cx: 520, cy: 640 }, { cx: 754, cy: 640 }, { cx: 988, cy: 640 }, { cx: 1232, cy: 640 },
+    { cx: 274, cy: 410 }, { cx: 504, cy: 410 }, { cx: 738, cy: 410 }, { cx: 991, cy: 410 }, { cx: 1231, cy: 410 },
+    { cx: 274, cy: 634 }, { cx: 510, cy: 634 }, { cx: 744, cy: 634 }, { cx: 991, cy: 634 }, { cx: 1231, cy: 634 },
   ],
   inspo_by_pups: [
-    { cx: 278, cy: 442 }, { cx: 522, cy: 442 }, { cx: 762, cy: 442 }, { cx: 1004, cy: 442 }, { cx: 1258, cy: 442 },
-    { cx: 278, cy: 688 }, { cx: 522, cy: 688 }, { cx: 762, cy: 688 }, { cx: 1004, cy: 688 }, { cx: 1258, cy: 688 },
+    { cx: 284, cy: 443 }, { cx: 528, cy: 443 }, { cx: 762, cy: 443 }, { cx: 1006, cy: 443 }, { cx: 1260, cy: 443 },
+    { cx: 286, cy: 685 }, { cx: 526, cy: 685 }, { cx: 760, cy: 685 }, { cx: 1002, cy: 685 }, { cx: 1252, cy: 685 },
   ],
   inspo_by_reptiles: [
-    { cx: 290, cy: 374 }, { cx: 516, cy: 374 }, { cx: 736, cy: 374 }, { cx: 972, cy: 374 }, { cx: 1216, cy: 374 },
-    { cx: 290, cy: 608 }, { cx: 516, cy: 608 }, { cx: 736, cy: 608 }, { cx: 972, cy: 608 }, { cx: 1216, cy: 608 },
+    { cx: 286, cy: 372 }, { cx: 516, cy: 372 }, { cx: 736, cy: 372 }, { cx: 972, cy: 372 }, { cx: 1212, cy: 372 },
+    { cx: 292, cy: 606 }, { cx: 518, cy: 606 }, { cx: 740, cy: 606 }, { cx: 978, cy: 606 }, { cx: 1210, cy: 606 },
   ],
   inspo_by_trans: [
-    { cx: 238, cy: 452 }, { cx: 484, cy: 452 }, { cx: 746, cy: 452 }, { cx: 1004, cy: 452 }, { cx: 1266, cy: 452 },
-    { cx: 238, cy: 671 }, { cx: 484, cy: 671 }, { cx: 746, cy: 671 }, { cx: 1004, cy: 671 }, { cx: 1266, cy: 671 },
+    { cx: 238, cy: 447 }, { cx: 484, cy: 447 }, { cx: 742, cy: 447 }, { cx: 1004, cy: 447 }, { cx: 1258, cy: 447 },
+    { cx: 250, cy: 677 }, { cx: 492, cy: 677 }, { cx: 740, cy: 677 }, { cx: 1000, cy: 677 }, { cx: 1256, cy: 677 },
   ],
   nebula: [
-    { cx: 274, cy: 417 }, { cx: 504, cy: 417 }, { cx: 742, cy: 417 }, { cx: 966, cy: 417 }, { cx: 1214, cy: 417 },
-    { cx: 274, cy: 640 }, { cx: 504, cy: 640 }, { cx: 742, cy: 640 }, { cx: 966, cy: 640 }, { cx: 1214, cy: 640 },
+    { cx: 276, cy: 418 }, { cx: 508, cy: 418 }, { cx: 740, cy: 418 }, { cx: 970, cy: 418 }, { cx: 1220, cy: 418 },
+    { cx: 284, cy: 638 }, { cx: 512, cy: 638 }, { cx: 746, cy: 638 }, { cx: 972, cy: 638 }, { cx: 1218, cy: 638 },
   ],
   neon_purple: [
-    { cx: 256, cy: 448 }, { cx: 516, cy: 448 }, { cx: 760, cy: 448 }, { cx: 1012, cy: 448 }, { cx: 1284, cy: 448 },
-    { cx: 256, cy: 668 }, { cx: 516, cy: 668 }, { cx: 760, cy: 668 }, { cx: 1012, cy: 668 }, { cx: 1284, cy: 668 },
+    { cx: 256, cy: 447 }, { cx: 516, cy: 447 }, { cx: 768, cy: 447 }, { cx: 1024, cy: 447 }, { cx: 1272, cy: 447 },
+    { cx: 258, cy: 670 }, { cx: 508, cy: 670 }, { cx: 760, cy: 670 }, { cx: 1026, cy: 670 }, { cx: 1270, cy: 670 },
   ],
   og_tbp: [
     { cx: 288, cy: 378 }, { cx: 526, cy: 378 }, { cx: 766, cy: 378 }, { cx: 1004, cy: 378 }, { cx: 1242, cy: 378 },
-    { cx: 288, cy: 618 }, { cx: 526, cy: 618 }, { cx: 766, cy: 618 }, { cx: 1004, cy: 618 }, { cx: 1242, cy: 618 },
+    { cx: 290, cy: 618 }, { cx: 526, cy: 618 }, { cx: 764, cy: 618 }, { cx: 1004, cy: 618 }, { cx: 1244, cy: 618 },
   ],
   pink_card: [
-    { cx: 310, cy: 448 }, { cx: 520, cy: 448 }, { cx: 742, cy: 448 }, { cx: 952, cy: 448 }, { cx: 1174, cy: 448 },
-    { cx: 310, cy: 648 }, { cx: 520, cy: 648 }, { cx: 742, cy: 648 }, { cx: 952, cy: 648 }, { cx: 1174, cy: 648 },
+    { cx: 310, cy: 448 }, { cx: 516, cy: 448 }, { cx: 744, cy: 448 }, { cx: 952, cy: 448 }, { cx: 1171, cy: 448 },
+    { cx: 310, cy: 649 }, { cx: 516, cy: 649 }, { cx: 744, cy: 649 }, { cx: 952, cy: 649 }, { cx: 1171, cy: 649 },
   ],
   kirby: [
-    { cx: 264, cy: 413 }, { cx: 514, cy: 413 }, { cx: 762, cy: 413 }, { cx: 1004, cy: 413 }, { cx: 1246, cy: 413 },
-    { cx: 264, cy: 652 }, { cx: 514, cy: 652 }, { cx: 762, cy: 652 }, { cx: 1004, cy: 652 }, { cx: 1246, cy: 652 },
-  ],
-  purple_thunder: [
-    { cx: 290, cy: 421 }, { cx: 512, cy: 421 }, { cx: 738, cy: 421 }, { cx: 963, cy: 421 }, { cx: 1190, cy: 421 },
-    { cx: 290, cy: 646 }, { cx: 512, cy: 646 }, { cx: 738, cy: 646 }, { cx: 963, cy: 646 }, { cx: 1190, cy: 646 },
-  ],
-  silver_card: [
-    { cx: 233, cy: 405 }, { cx: 490, cy: 405 }, { cx: 745, cy: 405 }, { cx: 1002, cy: 405 }, { cx: 1259, cy: 405 },
-    { cx: 233, cy: 640 }, { cx: 490, cy: 640 }, { cx: 745, cy: 640 }, { cx: 1002, cy: 640 }, { cx: 1259, cy: 640 },
-  ],
-  spring_new: [
-    { cx: 318, cy: 410 }, { cx: 538, cy: 410 }, { cx: 754, cy: 410 }, { cx: 966, cy: 410 }, { cx: 1194, cy: 410 },
-    { cx: 318, cy: 628 }, { cx: 538, cy: 628 }, { cx: 754, cy: 628 }, { cx: 966, cy: 628 }, { cx: 1194, cy: 628 },
-  ],
-  summer: [
-    { cx: 227, cy: 445 }, { cx: 473, cy: 445 }, { cx: 731, cy: 445 }, { cx: 983, cy: 445 }, { cx: 1241, cy: 445 },
-    { cx: 227, cy: 660 }, { cx: 473, cy: 660 }, { cx: 731, cy: 660 }, { cx: 983, cy: 660 }, { cx: 1241, cy: 660 },
-  ],
-  white_marble: [
-    { cx: 298, cy: 488 }, { cx: 526, cy: 488 }, { cx: 764, cy: 488 }, { cx: 996, cy: 488 }, { cx: 1228, cy: 488 },
-    { cx: 298, cy: 668 }, { cx: 526, cy: 668 }, { cx: 764, cy: 668 }, { cx: 996, cy: 668 }, { cx: 1228, cy: 668 },
-  ],
-  winter: [
-    { cx: 262, cy: 417 }, { cx: 506, cy: 417 }, { cx: 746, cy: 417 }, { cx: 986, cy: 417 }, { cx: 1224, cy: 417 },
-    { cx: 262, cy: 638 }, { cx: 506, cy: 638 }, { cx: 746, cy: 638 }, { cx: 986, cy: 638 }, { cx: 1224, cy: 638 },
+    { cx: 276, cy: 413 }, { cx: 514, cy: 413 }, { cx: 762, cy: 413 }, { cx: 1008, cy: 413 }, { cx: 1246, cy: 413 },
+    { cx: 272, cy: 657 }, { cx: 516, cy: 657 }, { cx: 762, cy: 657 }, { cx: 1002, cy: 657 }, { cx: 1248, cy: 657 },
   ],
   kirby_meadow: [
-    { cx: 274, cy: 374 }, { cx: 528, cy: 374 }, { cx: 774, cy: 374 }, { cx: 1014, cy: 374 }, { cx: 1262, cy: 374 },
-    { cx: 284, cy: 605 }, { cx: 520, cy: 605 }, { cx: 774, cy: 605 }, { cx: 1010, cy: 605 }, { cx: 1258, cy: 605 },
+    { cx: 281, cy: 371 }, { cx: 539, cy: 371 }, { cx: 768, cy: 371 }, { cx: 1008, cy: 371 }, { cx: 1256, cy: 371 },
+    { cx: 281, cy: 608 }, { cx: 539, cy: 608 }, { cx: 768, cy: 608 }, { cx: 1008, cy: 608 }, { cx: 1256, cy: 608 },
   ],
   kirby_rainbow: [
-    { cx: 306, cy: 379 }, { cx: 540, cy: 379 }, { cx: 768, cy: 379 }, { cx: 996, cy: 379 }, { cx: 1222, cy: 379 },
-    { cx: 308, cy: 608 }, { cx: 542, cy: 608 }, { cx: 770, cy: 608 }, { cx: 986, cy: 608 }, { cx: 1214, cy: 608 },
+    { cx: 306, cy: 378 }, { cx: 546, cy: 378 }, { cx: 768, cy: 378 }, { cx: 998, cy: 378 }, { cx: 1214, cy: 378 },
+    { cx: 308, cy: 605 }, { cx: 542, cy: 605 }, { cx: 770, cy: 605 }, { cx: 996, cy: 605 }, { cx: 1218, cy: 605 },
   ],
   kirby_neon: [
-    { cx: 240, cy: 390 }, { cx: 480, cy: 390 }, { cx: 760, cy: 390 }, { cx: 1006, cy: 390 }, { cx: 1260, cy: 390 },
-    { cx: 250, cy: 627 }, { cx: 494, cy: 627 }, { cx: 752, cy: 627 }, { cx: 1016, cy: 627 }, { cx: 1262, cy: 627 },
+    { cx: 238, cy: 400 }, { cx: 488, cy: 400 }, { cx: 750, cy: 400 }, { cx: 1016, cy: 400 }, { cx: 1288, cy: 400 },
+    { cx: 238, cy: 647 }, { cx: 490, cy: 647 }, { cx: 750, cy: 647 }, { cx: 1016, cy: 647 }, { cx: 1288, cy: 647 },
+  ],
+  purple_thunder: [
+    { cx: 296, cy: 426 }, { cx: 520, cy: 426 }, { cx: 744, cy: 426 }, { cx: 976, cy: 426 }, { cx: 1196, cy: 426 },
+    { cx: 300, cy: 643 }, { cx: 522, cy: 643 }, { cx: 750, cy: 643 }, { cx: 982, cy: 643 }, { cx: 1200, cy: 643 },
+  ],
+  silver_card: [
+    { cx: 222, cy: 406 }, { cx: 490, cy: 406 }, { cx: 738, cy: 406 }, { cx: 1002, cy: 406 }, { cx: 1262, cy: 406 },
+    { cx: 242, cy: 642 }, { cx: 484, cy: 642 }, { cx: 742, cy: 642 }, { cx: 1000, cy: 642 }, { cx: 1264, cy: 642 },
+  ],
+  spring_new: [
+    { cx: 314, cy: 411 }, { cx: 546, cy: 411 }, { cx: 754, cy: 411 }, { cx: 968, cy: 411 }, { cx: 1192, cy: 411 },
+    { cx: 316, cy: 627 }, { cx: 542, cy: 627 }, { cx: 758, cy: 627 }, { cx: 966, cy: 627 }, { cx: 1186, cy: 627 },
+  ],
+  summer: [
+    { cx: 218, cy: 422 }, { cx: 474, cy: 422 }, { cx: 726, cy: 422 }, { cx: 990, cy: 422 }, { cx: 1244, cy: 422 },
+    { cx: 230, cy: 644 }, { cx: 470, cy: 644 }, { cx: 730, cy: 644 }, { cx: 984, cy: 644 }, { cx: 1242, cy: 644 },
+  ],
+  white_marble: [
+    { cx: 296, cy: 466 }, { cx: 528, cy: 466 }, { cx: 760, cy: 466 }, { cx: 996, cy: 466 }, { cx: 1230, cy: 466 },
+    { cx: 298, cy: 656 }, { cx: 528, cy: 656 }, { cx: 764, cy: 656 }, { cx: 998, cy: 656 }, { cx: 1228, cy: 656 },
+  ],
+  winter: [
+    { cx: 266, cy: 417 }, { cx: 500, cy: 417 }, { cx: 750, cy: 417 }, { cx: 980, cy: 417 }, { cx: 1226, cy: 417 },
+    { cx: 262, cy: 640 }, { cx: 506, cy: 640 }, { cx: 750, cy: 640 }, { cx: 982, cy: 640 }, { cx: 1220, cy: 640 },
   ],
 };
 
 const STAMP_SIZE_BY_CARD = {
-  black_design:     170,
-  bubble:           155,
-  fall:             155,
-  flower:           165,
-  furry_friend:     180,
-  galaxy:           165,
-  inso_by_daisys:   155,
-  inspo_by_bi:      185,
-  inspo_by_les:     195,
-  inspo_by_meows:   180,
-  inspo_by_nonbi:   165,
-  inspo_by_pets:    165,
-  inspo_by_pride:   165,
-  inspo_by_pups:    190,
-  inspo_by_reptiles:170,
-  inspo_by_trans:   175,
-  nebula:           170,
-  neon_purple:      160,
-  og_tbp:           185,
-  pink_card:        158,
-  kirby:            195,
-  kirby_meadow:     158,
-  kirby_rainbow:    166,
-  kirby_neon:       176,
-  kirby_meadow:     158,
-  kirby_rainbow:    166,
-  kirby_neon:       176,
-  purple_thunder:   155,
-  silver_card:      165,
-  spring_new:       160,
-  summer:           170,
-  white_marble:     165,
-  winter:           170,
+  black_design:      174,
+  bubble:            169,
+  fall:              167,
+  flower:            171,
+  furry_friend:      176,
+  galaxy:            174,
+  inso_by_daisys:    160,
+  inspo_by_bi:       182,
+  inspo_by_les:      195,
+  inspo_by_meows:    176,
+  inspo_by_nonbi:    172,
+  inspo_by_pets:     171,
+  inspo_by_pride:    167,
+  inspo_by_pups:     189,
+  inspo_by_reptiles: 176,
+  inspo_by_trans:    176,
+  nebula:            171,
+  neon_purple:       163,
+  og_tbp:            191,
+  pink_card:         163,
+  kirby:             193,
+  kirby_meadow:      180,
+  kirby_rainbow:     198,
+  kirby_neon:        198,
+  purple_thunder:    154,
+  silver_card:       174,
+  spring_new:        163,
+  summer:            171,
+  white_marble:      180,
+  winter:            161,
 };
 
 // =====================
@@ -899,11 +893,11 @@ client.on("interactionCreate", async (interaction) => {
 
       const targetUser = interaction.options.getUser("user", true);
       const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      if (!targetMember) return interaction.editReply({ content: "❌ I can't find that member in this server." });
+      if (!targetMember) return interaction.reply({ content: "❌ I can't find that member in this server.", ephemeral: true });
 
       const savedCard = await getCard(guildId, targetUser.id);
       const cardId = savedCard?.card_id || savedCard || "og";
-      if (!STAMP_CARDS[cardId]) return interaction.editReply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`." });
+      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`.", ephemeral: true });
 
       // RESET
       if (sub === "reset") {
