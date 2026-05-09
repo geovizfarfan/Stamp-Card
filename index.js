@@ -470,16 +470,9 @@ const commands = [
         .addUserOption((o) => o.setName("user").setDescription("User (optional)"))
     )
     .addSubcommand((s) =>
-      s.setName("setcard").setDescription("Choose a stamp card design A–N (managers can set for other users too)")
+      s.setName("setcard").setDescription("Choose your stamp card design")
         .addStringOption((o) =>
-          o.setName("card").setDescription("Which card design?").setRequired(true).addChoices(...CARD_CHOICES_A)
-        )
-        .addUserOption((o) => o.setName("user").setDescription("Set card for this user (managers only)"))
-    )
-    .addSubcommand((s) =>
-      s.setName("setcard2").setDescription("Choose a stamp card design O–W (managers can set for other users too)")
-        .addStringOption((o) =>
-          o.setName("card").setDescription("Which card design?").setRequired(true).addChoices(...CARD_CHOICES_B)
+          o.setName("card").setDescription("Search for a card design").setRequired(true).setAutocomplete(true)
         )
         .addUserOption((o) => o.setName("user").setDescription("Set card for this user (managers only)"))
     )
@@ -500,10 +493,7 @@ const commands = [
       s.setName("reset").setDescription("Reset a user's stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
         .addStringOption((o) =>
-          o.setName("card").setDescription("Switch to a new card A–N after reset (optional)").addChoices(...CARD_CHOICES_A)
-        )
-        .addStringOption((o) =>
-          o.setName("card2").setDescription("Switch to a new card O–W after reset (optional)").addChoices(...CARD_CHOICES_B)
+          o.setName("card").setDescription("Switch to a new card after reset (optional)").setAutocomplete(true)
         )
     )
     .addSubcommand((s) =>
@@ -671,6 +661,23 @@ async function canManage(interaction) {
 }
 
 // =====================
+// AUTOCOMPLETE
+// =====================
+client.on("interactionCreate", async (interaction) => {
+  if (!interaction.isAutocomplete()) return;
+  if (interaction.commandName !== "stamp") return;
+  const sub = interaction.options.getSubcommand();
+  if (sub === "setcard" || sub === "reset") {
+    const focused = interaction.options.getFocused().toLowerCase();
+    const choices = Object.entries(STAMP_CARDS)
+      .filter(([, card]) => card.name.toLowerCase().includes(focused))
+      .slice(0, 25)
+      .map(([value, card]) => ({ name: card.name, value }));
+    await interaction.respond(choices);
+  }
+});
+
+// =====================
 // HANDLER
 // =====================
 client.on("interactionCreate", async (interaction) => {
@@ -710,30 +717,23 @@ client.on("interactionCreate", async (interaction) => {
       await interaction.deferReply();
 
       const savedStamp = await getCard(guildId, user.id);
-      const stampId = savedStamp?.stamp_id || 'black_stamp';
+      const stampId = savedStamp?.stamp_id || 'gold_stamp';
 
-      // Send summary first
-      const lines = rows.map((r) => {
-        const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
-        const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
-        console.log('claimed raw:', r.claimed, typeof r.claimed);
-        const claimStatus = (r.claimed === true || r.claimed === 't' || r.claimed === 'true') ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
-        return `<:medaltop:1489043799307980893> **Card #${r.card_number}** — ${cardName} — ${date} — ${claimStatus}`;
-      });
-
+      // First message: header only
       await interaction.editReply({
-        content: `## <a:412536pastelpurplesparklies:1489110919354253363> Stamp History for ${user.username} <a:412536pastelpurplesparklies:1489110919354253363>\n<:cards:1489111688849657917> Total cards completed: **${total}**\n\n` + lines.join("\n"),
+        content: `## <a:412536pastelpurplesparklies:1489110919354253363> Stamp History for ${user.username} <a:412536pastelpurplesparklies:1489110919354253363>\n<:cards:1489111688849657917> Total cards completed: **${total}**`,
         allowedMentions: { users: [] },
       });
 
-      // Send each card image as a follow-up
+      // Each card: single follow-up with image + all info in caption
       for (const r of rows) {
-        const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
-        const claimStatus = (r.claimed === true || r.claimed === "t" || r.claimed === "true") ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
         if (!STAMP_CARDS[r.card_id]) continue;
+        const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
+        const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
+        const claimStatus = (r.claimed === true || r.claimed === 't' || r.claimed === 'true') ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
         const buffer = await renderStampCard(r.card_id, 10, stampId);
         await interaction.followUp({
-          content: `<:medaltop:1489043799307980893> **Card #${r.card_number}** — ${cardName} — ${claimStatus}`,
+          content: `<:medaltop:1489043799307980893> **Card #${r.card_number}** — ${cardName} — ${date} — ${claimStatus}`,
           files: [{ attachment: buffer, name: `card_${r.card_number}.png` }],
           allowedMentions: { users: [] },
         });
@@ -803,10 +803,10 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     // ===== SETCARD =====
-    if (sub === "setcard" || sub === "setcard2") {
+    if (sub === "setcard") {
       const cardId = interaction.options.getString("card", true);
       const targetUser = interaction.options.getUser("user");
-      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Unknown card choice.", ephemeral: true });
+      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Unknown card choice. Please pick from the list.", ephemeral: true });
 
       const userId = (targetUser && targetUser.id !== interaction.user.id) ? targetUser.id : interaction.user.id;
       const isOther = targetUser && targetUser.id !== interaction.user.id;
@@ -830,10 +830,24 @@ client.on("interactionCreate", async (interaction) => {
       await setCard(guildId, userId, cardId);
 
       const transferNote = transferredCount > 0 ? ` **${transferredCount}** stamp(s) have been transferred to the new card!` : "";
+
+      // Render preview with 1 stamp
+      await interaction.deferReply({ ephemeral: true });
+      const savedStampInfo = await getCard(guildId, userId);
+      const previewStampId = savedStampInfo?.stamp_id || "gold_stamp";
+      const previewBuffer = await renderStampCard(cardId, 1, previewStampId);
+
       if (isOther) {
-        return interaction.reply({ content: `✅ **${targetUser.username}'s** stamp card has been set to **${STAMP_CARDS[cardId].name}**.${transferNote}` });
+        return interaction.editReply({
+          content: `✅ **${targetUser.username}'s** stamp card has been set to **${STAMP_CARDS[cardId].name}**.${transferNote}`,
+          files: [{ attachment: previewBuffer, name: "card-preview.png" }],
+        });
       }
-      return interaction.reply({ content: `✅ Saved! Your stamp card is now **${STAMP_CARDS[cardId].name}**.${transferNote}`, ephemeral: true });
+      return interaction.editReply({
+        content: `✅ Your stamp card is now **${STAMP_CARDS[cardId].name}**!${transferNote}
+*Here's a preview of your new card:*`,
+        files: [{ attachment: previewBuffer, name: "card-preview.png" }],
+      });
     }
 
     // ===== VIEW =====
