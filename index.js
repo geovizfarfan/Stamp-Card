@@ -79,8 +79,8 @@ const STAMPS = {
   pink_stamp:       { name: "Pink",                     file: "Pink_Stamp.png" },
   purple_stamp:     { name: "Purple",                   file: "Purple_Stamp.png" },
   silver_stamp:     { name: "Silver",                   file: "Silver_Stamp.png" },
-  verified_gold:    { name: "Verified Gold",            file: "Verfied_Gold.png" },
-  verified_black:   { name: "Verified Black",           file: "Verified_Black_Stamp.png" },
+  verified_gold:    { name: "Verified Gold",            file: "Verified_Gold.png" },
+  verified_black:   { name: "Verified Black",           file: "Verified_Black.png" },
 };
 
 const STAMP_CHOICES = Object.entries(STAMPS).map(([value, s]) => ({ name: s.name, value }));
@@ -556,6 +556,8 @@ const commands = [
 client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
   const rest = new REST({ version: "10" }).setToken(TOKEN);
+  // Clear all commands first, then re-register fresh
+  await rest.put(Routes.applicationCommands(client.user.id), { body: [] });
   await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
   console.log("Slash commands registered globally");
 });
