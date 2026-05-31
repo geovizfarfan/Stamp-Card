@@ -110,8 +110,8 @@ const POSITIONS_BY_CARD = {
     { cx: 260, cy: 659 }, { cx: 502, cy: 659 }, { cx: 746, cy: 659 }, { cx: 990, cy: 659 }, { cx: 1226, cy: 659 },
   ],
   galaxy: [
-    { cx: 250, cy: 456 }, { cx: 484, cy: 456 }, { cx: 752, cy: 456 }, { cx: 1012, cy: 456 }, { cx: 1262, cy: 456 },
-    { cx: 250, cy: 680 }, { cx: 482, cy: 680 }, { cx: 752, cy: 680 }, { cx: 1012, cy: 680 }, { cx: 1268, cy: 680 },
+    { cx: 245, cy: 452 }, { cx: 479, cy: 457 }, { cx: 755, cy: 461 }, { cx: 1015, cy: 460 }, { cx: 1264, cy: 461 },
+    { cx: 245, cy: 689 }, { cx: 472, cy: 683 }, { cx: 740, cy: 686 }, { cx: 1022, cy: 686 }, { cx: 1258, cy: 682 },
   ],
   inso_by_daisys: [
     { cx: 312, cy: 432 }, { cx: 522, cy: 432 }, { cx: 746, cy: 432 }, { cx: 968, cy: 432 }, { cx: 1186, cy: 432 },
@@ -154,20 +154,20 @@ const POSITIONS_BY_CARD = {
     { cx: 250, cy: 677 }, { cx: 492, cy: 677 }, { cx: 740, cy: 677 }, { cx: 1000, cy: 677 }, { cx: 1256, cy: 677 },
   ],
   nebula: [
-    { cx: 276, cy: 418 }, { cx: 508, cy: 418 }, { cx: 740, cy: 418 }, { cx: 970, cy: 418 }, { cx: 1220, cy: 418 },
-    { cx: 284, cy: 638 }, { cx: 512, cy: 638 }, { cx: 746, cy: 638 }, { cx: 972, cy: 638 }, { cx: 1218, cy: 638 },
+    { cx: 278, cy: 416 }, { cx: 509, cy: 419 }, { cx: 743, cy: 419 }, { cx: 968, cy: 419 }, { cx: 1220, cy: 419 },
+    { cx: 281, cy: 635 }, { cx: 509, cy: 641 }, { cx: 742, cy: 634 }, { cx: 973, cy: 632 }, { cx: 1210, cy: 637 },
   ],
   neon_purple: [
-    { cx: 256, cy: 447 }, { cx: 516, cy: 447 }, { cx: 768, cy: 447 }, { cx: 1024, cy: 447 }, { cx: 1272, cy: 447 },
-    { cx: 258, cy: 670 }, { cx: 508, cy: 670 }, { cx: 760, cy: 670 }, { cx: 1026, cy: 670 }, { cx: 1270, cy: 670 },
+    { cx: 259, cy: 440 }, { cx: 511, cy: 451 }, { cx: 763, cy: 451 }, { cx: 1019, cy: 445 }, { cx: 1276, cy: 445 },
+    { cx: 263, cy: 670 }, { cx: 511, cy: 670 }, { cx: 766, cy: 668 }, { cx: 1019, cy: 674 }, { cx: 1282, cy: 673 },
   ],
   og_tbp: [
-    { cx: 288, cy: 378 }, { cx: 526, cy: 378 }, { cx: 766, cy: 378 }, { cx: 1004, cy: 378 }, { cx: 1242, cy: 378 },
-    { cx: 290, cy: 618 }, { cx: 526, cy: 618 }, { cx: 764, cy: 618 }, { cx: 1004, cy: 618 }, { cx: 1244, cy: 618 },
+    { cx: 290, cy: 379 }, { cx: 524, cy: 377 }, { cx: 766, cy: 380 }, { cx: 1004, cy: 374 }, { cx: 1241, cy: 377 },
+    { cx: 287, cy: 619 }, { cx: 523, cy: 619 }, { cx: 766, cy: 617 }, { cx: 1004, cy: 620 }, { cx: 1240, cy: 619 },
   ],
   pink_card: [
-    { cx: 310, cy: 448 }, { cx: 516, cy: 448 }, { cx: 744, cy: 448 }, { cx: 952, cy: 448 }, { cx: 1171, cy: 448 },
-    { cx: 310, cy: 649 }, { cx: 516, cy: 649 }, { cx: 744, cy: 649 }, { cx: 952, cy: 649 }, { cx: 1171, cy: 649 },
+    { cx: 314, cy: 448 }, { cx: 524, cy: 449 }, { cx: 742, cy: 446 }, { cx: 956, cy: 446 }, { cx: 1175, cy: 449 },
+    { cx: 313, cy: 649 }, { cx: 517, cy: 646 }, { cx: 742, cy: 649 }, { cx: 952, cy: 647 }, { cx: 1174, cy: 652 },
   ],
   kirby: [
     { cx: 276, cy: 413 }, { cx: 514, cy: 413 }, { cx: 762, cy: 413 }, { cx: 1008, cy: 413 }, { cx: 1246, cy: 413 },
@@ -182,32 +182,32 @@ const POSITIONS_BY_CARD = {
     { cx: 308, cy: 605 }, { cx: 542, cy: 605 }, { cx: 770, cy: 605 }, { cx: 996, cy: 605 }, { cx: 1218, cy: 605 },
   ],
   kirby_neon: [
-    { cx: 238, cy: 400 }, { cx: 488, cy: 400 }, { cx: 750, cy: 400 }, { cx: 1016, cy: 400 }, { cx: 1288, cy: 400 },
-    { cx: 238, cy: 647 }, { cx: 490, cy: 647 }, { cx: 750, cy: 647 }, { cx: 1016, cy: 647 }, { cx: 1288, cy: 647 },
+    { cx: 236, cy: 395 }, { cx: 488, cy: 379 }, { cx: 742, cy: 392 }, { cx: 1015, cy: 392 }, { cx: 1270, cy: 392 },
+    { cx: 236, cy: 629 }, { cx: 494, cy: 626 }, { cx: 752, cy: 617 }, { cx: 1021, cy: 635 }, { cx: 1270, cy: 635 },
   ],
   purple_thunder: [
-    { cx: 296, cy: 426 }, { cx: 520, cy: 426 }, { cx: 744, cy: 426 }, { cx: 976, cy: 426 }, { cx: 1196, cy: 426 },
-    { cx: 300, cy: 643 }, { cx: 522, cy: 643 }, { cx: 750, cy: 643 }, { cx: 982, cy: 643 }, { cx: 1200, cy: 643 },
+    { cx: 296, cy: 424 }, { cx: 529, cy: 430 }, { cx: 748, cy: 431 }, { cx: 974, cy: 428 }, { cx: 1192, cy: 427 },
+    { cx: 304, cy: 647 }, { cx: 524, cy: 646 }, { cx: 749, cy: 646 }, { cx: 974, cy: 638 }, { cx: 1199, cy: 643 },
   ],
   silver_card: [
-    { cx: 222, cy: 406 }, { cx: 490, cy: 406 }, { cx: 738, cy: 406 }, { cx: 1002, cy: 406 }, { cx: 1262, cy: 406 },
-    { cx: 242, cy: 642 }, { cx: 484, cy: 642 }, { cx: 742, cy: 642 }, { cx: 1000, cy: 642 }, { cx: 1264, cy: 642 },
+    { cx: 232, cy: 413 }, { cx: 490, cy: 406 }, { cx: 742, cy: 410 }, { cx: 1003, cy: 412 }, { cx: 1261, cy: 403 },
+    { cx: 227, cy: 640 }, { cx: 497, cy: 646 }, { cx: 746, cy: 647 }, { cx: 1007, cy: 643 }, { cx: 1262, cy: 640 },
   ],
   spring_new: [
-    { cx: 314, cy: 411 }, { cx: 546, cy: 411 }, { cx: 754, cy: 411 }, { cx: 968, cy: 411 }, { cx: 1192, cy: 411 },
-    { cx: 316, cy: 627 }, { cx: 542, cy: 627 }, { cx: 758, cy: 627 }, { cx: 966, cy: 627 }, { cx: 1186, cy: 627 },
+    { cx: 317, cy: 412 }, { cx: 544, cy: 415 }, { cx: 755, cy: 412 }, { cx: 967, cy: 412 }, { cx: 1181, cy: 407 },
+    { cx: 311, cy: 625 }, { cx: 541, cy: 622 }, { cx: 749, cy: 625 }, { cx: 965, cy: 625 }, { cx: 1186, cy: 622 },
   ],
   summer: [
-    { cx: 218, cy: 422 }, { cx: 474, cy: 422 }, { cx: 726, cy: 422 }, { cx: 990, cy: 422 }, { cx: 1244, cy: 422 },
-    { cx: 230, cy: 644 }, { cx: 470, cy: 644 }, { cx: 730, cy: 644 }, { cx: 984, cy: 644 }, { cx: 1242, cy: 644 },
+    { cx: 218, cy: 422 }, { cx: 473, cy: 424 }, { cx: 731, cy: 424 }, { cx: 974, cy: 422 }, { cx: 1243, cy: 418 },
+    { cx: 226, cy: 647 }, { cx: 478, cy: 652 }, { cx: 728, cy: 649 }, { cx: 992, cy: 647 }, { cx: 1240, cy: 649 },
   ],
   white_marble: [
-    { cx: 296, cy: 466 }, { cx: 528, cy: 466 }, { cx: 760, cy: 466 }, { cx: 996, cy: 466 }, { cx: 1230, cy: 466 },
-    { cx: 298, cy: 656 }, { cx: 528, cy: 656 }, { cx: 764, cy: 656 }, { cx: 998, cy: 656 }, { cx: 1228, cy: 656 },
+    { cx: 293, cy: 482 }, { cx: 526, cy: 482 }, { cx: 761, cy: 482 }, { cx: 994, cy: 482 }, { cx: 1226, cy: 482 },
+    { cx: 293, cy: 675 }, { cx: 529, cy: 675 }, { cx: 766, cy: 675 }, { cx: 991, cy: 675 }, { cx: 1231, cy: 675 },
   ],
   winter: [
-    { cx: 266, cy: 417 }, { cx: 500, cy: 417 }, { cx: 750, cy: 417 }, { cx: 980, cy: 417 }, { cx: 1226, cy: 417 },
-    { cx: 262, cy: 640 }, { cx: 506, cy: 640 }, { cx: 750, cy: 640 }, { cx: 982, cy: 640 }, { cx: 1220, cy: 640 },
+    { cx: 256, cy: 419 }, { cx: 505, cy: 412 }, { cx: 748, cy: 421 }, { cx: 985, cy: 410 }, { cx: 1219, cy: 415 },
+    { cx: 266, cy: 635 }, { cx: 500, cy: 646 }, { cx: 736, cy: 646 }, { cx: 986, cy: 637 }, { cx: 1225, cy: 640 },
   ],
 };
 
@@ -240,7 +240,7 @@ const STAMP_SIZE_BY_CARD = {
   silver_card:       174,
   spring_new:        163,
   summer:            171,
-  white_marble:      180,
+  white_marble:      160,
   winter:            161,
 };
 
@@ -303,6 +303,17 @@ async function initDB() {
   `);
   await pool.query(`ALTER TABLE guild_settings ADD COLUMN IF NOT EXISTS manager_role_id TEXT`);
   await pool.query(`ALTER TABLE guild_settings ADD COLUMN IF NOT EXISTS reward_role_id TEXT`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS campaigns (
+      id SERIAL PRIMARY KEY,
+      guild_id TEXT, name TEXT, label TEXT,
+      created_at BIGINT, ended_at BIGINT,
+      active BOOLEAN DEFAULT TRUE,
+      UNIQUE(guild_id, name)
+    )
+  `);
+  await pool.query(`ALTER TABLE stamps ADD COLUMN IF NOT EXISTS campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL`);
+  await pool.query(`ALTER TABLE completed_cards ADD COLUMN IF NOT EXISTS campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL`);
   console.log("✅ Database tables ready.");
 }
 
@@ -362,10 +373,14 @@ async function countCompleted(guildId, userId) {
   const res = await pool.query("SELECT COUNT(*) as total FROM completed_cards WHERE guild_id=$1 AND user_id=$2", [guildId, userId]);
   return parseInt(res.rows[0].total, 10);
 }
-async function insertCompleted(guildId, userId, cardId, cardNumber) {
+async function maxCardNumber(guildId, userId) {
+  const res = await pool.query("SELECT COALESCE(MAX(card_number),0) as maxnum FROM completed_cards WHERE guild_id=$1 AND user_id=$2", [guildId, userId]);
+  return parseInt(res.rows[0].maxnum, 10);
+}
+async function insertCompleted(guildId, userId, cardId, cardNumber, campaignId = null) {
   await pool.query(
-    `INSERT INTO completed_cards (guild_id, user_id, card_id, card_number, completed_at) VALUES ($1,$2,$3,$4,$5)`,
-    [guildId, userId, cardId, cardNumber, Date.now()]
+    `INSERT INTO completed_cards (guild_id, user_id, card_id, card_number, completed_at, campaign_id) VALUES ($1,$2,$3,$4,$5,$6)`,
+    [guildId, userId, cardId, cardNumber, Date.now(), campaignId]
   );
 }
 async function setClaimedStatus(id, claimed) {
@@ -446,6 +461,49 @@ async function resolveManagerRole(guildId) {
 }
 
 // =====================
+// CAMPAIGN HELPERS
+// =====================
+async function createCampaign(guildId, name, label) {
+  const res = await pool.query(
+    `INSERT INTO campaigns (guild_id, name, label, created_at, active) VALUES ($1,$2,$3,$4,TRUE)
+     ON CONFLICT (guild_id, name) DO UPDATE SET label=EXCLUDED.label, ended_at=NULL, active=TRUE
+     RETURNING id`,
+    [guildId, name, label, Date.now()]
+  );
+  return res.rows[0].id;
+}
+async function endCampaign(guildId, name) {
+  await pool.query(
+    `UPDATE campaigns SET active=FALSE, ended_at=$1 WHERE guild_id=$2 AND name=$3`,
+    [Date.now(), guildId, name]
+  );
+}
+async function getActiveCampaign(guildId, name) {
+  const res = await pool.query(
+    `SELECT * FROM campaigns WHERE guild_id=$1 AND name=$2 AND active=TRUE`,
+    [guildId, name]
+  );
+  return res.rows[0] || null;
+}
+async function listCampaigns(guildId) {
+  const res = await pool.query(
+    `SELECT * FROM campaigns WHERE guild_id=$1 ORDER BY created_at DESC LIMIT 20`,
+    [guildId]
+  );
+  return res.rows;
+}
+async function getCampaignLeaderboard(guildId, campaignId) {
+  const res = await pool.query(
+    `SELECT user_id, COUNT(*) as cards_completed
+     FROM completed_cards
+     WHERE guild_id=$1 AND campaign_id=$2
+     GROUP BY user_id ORDER BY cards_completed DESC LIMIT 10`,
+    [guildId, campaignId]
+  );
+  return res.rows;
+}
+
+// =====================
 // DISCORD CLIENT
 // =====================
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -458,6 +516,16 @@ const commands = [
     .setName("stamp")
     .setDescription("Stamp card system")
 
+    .addSubcommand((s) =>
+      s.setName("memberstats").setDescription("Show a member's full stamp record (managers only)")
+        .addUserOption((o) => o.setName("user").setDescription("Member to look up").setRequired(true))
+    )
+    .addSubcommand((s) =>
+      s.setName("announce").setDescription("DM all members with a new card design announcement (managers only)")
+        .addStringOption((o) =>
+          o.setName("message").setDescription("The announcement message to DM all members").setRequired(true)
+        )
+    )
     .addSubcommand((s) =>
       s.setName("view").setDescription("View stamp progress")
         .addUserOption((o) => o.setName("user").setDescription("User (optional)"))
@@ -477,12 +545,33 @@ const commands = [
         .addUserOption((o) => o.setName("user").setDescription("Set card for this user (managers only)"))
     )
     .addSubcommand((s) =>
+      s.setName("campaign").setDescription("Manage stamp campaigns (managers only)")
+        .addStringOption((o) =>
+          o.setName("action").setDescription("What to do").setRequired(true)
+            .addChoices(
+              { name: "🚀 Start campaign", value: "start" },
+              { name: "🛑 End campaign", value: "end" },
+              { name: "📋 List campaigns", value: "list" },
+              { name: "🏆 Campaign leaderboard", value: "leaderboard" },
+            )
+        )
+        .addStringOption((o) =>
+          o.setName("name").setDescription("Campaign ID / short name (e.g. summer2025 — no spaces)")
+        )
+        .addStringOption((o) =>
+          o.setName("label").setDescription("Display name (e.g. Summer 2025 Event)")
+        )
+    )
+    .addSubcommand((s) =>
       s.setName("add").setDescription("Add stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
         .addStringOption((o) =>
           o.setName("design").setDescription("Override your saved stamp for this action (optional)").addChoices(...STAMP_CHOICES)
         )
         .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setMinValue(1))
+        .addStringOption((o) =>
+          o.setName("campaign").setDescription("Tag this stamp to a campaign (optional, use campaign name/ID)")
+        )
     )
     .addSubcommand((s) =>
       s.setName("remove").setDescription("Remove stamps (managers only)")
@@ -690,6 +779,67 @@ client.on("interactionCreate", async (interaction) => {
     const sub = interaction.options.getSubcommand();
     const guildId = interaction.guild.id;
 
+    // ===== MEMBERSTATS =====
+    if (sub === "memberstats") {
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to view member stats.", ephemeral: true });
+      const targetUser = interaction.options.getUser("user", true);
+
+      const savedCard = await getCard(guildId, targetUser.id);
+      const cardId = savedCard?.card_id;
+      const stampId = savedCard?.stamp_id || "black_stamp";
+      const currentCount = cardId ? await getCount(guildId, targetUser.id, cardId) : 0;
+      const completedRows = await getHistory(guildId, targetUser.id);
+      const totalCompleted = completedRows.length;
+      const unclaimed = completedRows.filter(r => !(r.claimed === true || r.claimed === 't' || r.claimed === 'true'));
+      const claimed = completedRows.filter(r => (r.claimed === true || r.claimed === 't' || r.claimed === 'true'));
+
+      const lines = [
+        `## 📋 Member Stats — ${targetUser}`,
+        ``,
+        `<:BULLET:1488760457073524947> **Current Card:** ${cardId && STAMP_CARDS[cardId] ? STAMP_CARDS[cardId].name : "Not set"}`,
+        `<:BULLET:1488760457073524947> **Current Stamps:** ${currentCount}/${STAMP_GOAL}`,
+        `<:BULLET:1488760457073524947> **Preferred Stamp:** ${STAMPS[stampId]?.name || stampId}`,
+        `<:BULLET:1488760457073524947> **Cards Completed:** ${totalCompleted}`,
+        `<:BULLET:1488760457073524947> **Unclaimed Rewards:** ${unclaimed.length}`,
+        `<:BULLET:1488760457073524947> **Claimed Rewards:** ${claimed.length}`,
+      ];
+
+      if (unclaimed.length > 0) {
+        lines.push(``, `**⏳ Unclaimed Cards:**`);
+        for (const r of unclaimed) {
+          const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
+          const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
+          lines.push(`  • Card #${r.card_number} — ${cardName} — completed ${date}`);
+        }
+      }
+
+      return interaction.reply({
+        content: lines.join("\n"),
+        allowedMentions: { users: [], roles: [] },
+        ephemeral: true,
+      });
+    }
+
+    // ===== ANNOUNCE =====
+    if (sub === "announce") {
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to send announcements.", ephemeral: true });
+      const message = interaction.options.getString("message", true);
+      await interaction.deferReply({ ephemeral: true });
+
+      const members = await interaction.guild.members.fetch();
+      let sent = 0, failed = 0;
+      for (const [, member] of members) {
+        if (member.user.bot) continue;
+        try {
+          await member.user.send(`## 📬 New Stamp Card Announcement from **${interaction.guild.name}**\n\n${message}`);
+          sent++;
+        } catch {
+          failed++;
+        }
+      }
+      return interaction.editReply({ content: `✅ Announcement sent!\n> **Delivered:** ${sent} members\n> **Failed (DMs closed):** ${failed} members` });
+    }
+
     // ===== LEADERBOARD =====
     if (sub === "leaderboard") {
       const rows = await getLeaderboard(guildId);
@@ -714,34 +864,41 @@ client.on("interactionCreate", async (interaction) => {
       const user = interaction.options.getUser("user") || interaction.user;
       const rows = await getHistory(guildId, user.id);
       const total = await countCompleted(guildId, user.id);
-      if (!rows.length) return interaction.reply({ content: `📭 **${user.username}** hasn't completed any stamp cards yet.`, ephemeral: true });
+      const savedCard = await getCard(guildId, user.id);
+      const currentCardId = savedCard?.card_id;
+      const currentCount = currentCardId ? await getCount(guildId, user.id, currentCardId) : 0;
 
-      await interaction.deferReply();
+      const lines = [
+        `## <a:412536pastelpurplesparklies:1489110919354253363> Stamp History for ${user}`,
+        `<:cards:1489111688849657917> Total cards completed: **${total}**`,
+        ``,
+      ];
 
-      const savedStamp = await getCard(guildId, user.id);
-      const stampId = savedStamp?.stamp_id || 'gold_stamp';
-
-      // First message: header only
-      await interaction.editReply({
-        content: `## <a:412536pastelpurplesparklies:1489110919354253363> Stamp History for ${user.username} <a:412536pastelpurplesparklies:1489110919354253363>\n<:cards:1489111688849657917> Total cards completed: **${total}**`,
-        allowedMentions: { users: [] },
-      });
-
-      // Each card: single follow-up with image + all info in caption
       for (const r of rows) {
-        if (!STAMP_CARDS[r.card_id]) continue;
         const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
         const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
-        const claimStatus = (r.claimed === true || r.claimed === 't' || r.claimed === 'true') ? `<a:5707lightpurplecheck:1488750465804926976> Claimed` : `<:hourglass:1489113198509424901> Unclaimed`;
-        const buffer = await renderStampCard(r.card_id, 10, stampId);
-        await interaction.followUp({
-          content: `<:medaltop:1489043799307980893> **Card #${r.card_number}** — ${cardName} — ${date} — ${claimStatus}`,
-          files: [{ attachment: buffer, name: `card_${r.card_number}.png` }],
-          allowedMentions: { users: [] },
-        });
+        const isClaimed = (r.claimed === true || r.claimed === 't' || r.claimed === 'true');
+        const claimStatus = isClaimed ? `✅ Claimed` : `⏳ Unclaimed`;
+        let campaignTag = "";
+        if (r.campaign_id) {
+          const campRes = await pool.query("SELECT label FROM campaigns WHERE id=$1", [r.campaign_id]);
+          if (campRes.rows[0]) campaignTag = ` — 🏷️ ${campRes.rows[0].label}`;
+        }
+        lines.push(`<:medaltop:1489043799307980893> **Card #${r.card_number}** — ${cardName} — ✅ Completed — ${date} — ${claimStatus}${campaignTag}`);
       }
 
-      return;
+      // Current in-progress card
+      if (currentCardId && STAMP_CARDS[currentCardId] && currentCount < STAMP_GOAL) {
+        const today = `<t:${Math.floor(Date.now() / 1000)}:D>`;
+        lines.push(`<:hourglass:1489113198509424901> **Card #${total + 1}** — ${STAMP_CARDS[currentCardId].name} — 🔄 In Progress — ${today} — ${currentCount}/${STAMP_GOAL}`);
+      }
+
+      if (lines.length <= 3) lines.push(`📭 No stamp history yet.`);
+
+      return interaction.reply({
+        content: lines.join("\n"),
+        allowedMentions: { users: [], roles: [] },
+      });
     }
 
     // ===== DELETE COMPLETED =====
@@ -902,6 +1059,64 @@ client.on("interactionCreate", async (interaction) => {
       return interaction.reply({ content: `✅ **${label}** set to ${role}. Staff with this role can now manage stamps.`, ephemeral: true });
     }
 
+    // ===== CAMPAIGN =====
+    if (sub === "campaign") {
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to manage campaigns.", ephemeral: true });
+      const action = interaction.options.getString("action", true);
+      const name = interaction.options.getString("name")?.toLowerCase().replace(/\s+/g, "_");
+      const label = interaction.options.getString("label");
+
+      if (action === "start") {
+        if (!name) return interaction.reply({ content: "❌ Provide a `name` for the campaign (e.g. `summer2025`).", ephemeral: true });
+        const displayLabel = label || name;
+        const id = await createCampaign(guildId, name, displayLabel);
+        return interaction.reply({
+          content: `🚀 **Campaign started!**\n> **Name (ID):** \`${name}\`\n> **Label:** ${displayLabel}\n> **Campaign ID:** #${id}\n\nUse \`/stamp add @user campaign:${name}\` to tag stamps to this campaign.`,
+          allowedMentions: { users: [] },
+        });
+      }
+
+      if (action === "end") {
+        if (!name) return interaction.reply({ content: "❌ Provide the campaign `name` to end.", ephemeral: true });
+        await endCampaign(guildId, name);
+        return interaction.reply({ content: `🛑 Campaign **\`${name}\`** has been ended.` });
+      }
+
+      if (action === "list") {
+        const rows = await listCampaigns(guildId);
+        if (!rows.length) return interaction.reply({ content: "📋 No campaigns found for this server.", ephemeral: true });
+        const lines = rows.map(r => {
+          const status = r.active ? "🟢 Active" : "🔴 Ended";
+          const since = `<t:${Math.floor(r.created_at / 1000)}:D>`;
+          return `${status} **${r.label}** (\`${r.name}\`) — started ${since}`;
+        });
+        return interaction.reply({ content: `## 📋 Campaigns\n\n${lines.join("\n")}`, allowedMentions: { users: [] } });
+      }
+
+      if (action === "leaderboard") {
+        if (!name) return interaction.reply({ content: "❌ Provide the campaign `name` to view its leaderboard.", ephemeral: true });
+        const campaign = await pool.query("SELECT * FROM campaigns WHERE guild_id=$1 AND name=$2", [guildId, name]);
+        const c = campaign.rows[0];
+        if (!c) return interaction.reply({ content: `❌ Campaign \`${name}\` not found.`, ephemeral: true });
+        const rows = await getCampaignLeaderboard(guildId, c.id);
+        if (!rows.length) return interaction.reply({ content: `📊 No completed cards yet for **${c.label}**.`, ephemeral: true });
+        const lines = [];
+        let rank = 1;
+        for (const row of rows) {
+          const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
+          if (!member) continue;
+          lines.push(`**${rank}.** ${member.user.username} — **${row.cards_completed}** card(s) completed`);
+          rank++;
+        }
+        return interaction.reply({
+          content: `## 🏆 ${c.label} — Campaign Leaderboard\n\n${lines.join("\n")}`,
+          allowedMentions: { users: [] },
+        });
+      }
+
+      return interaction.reply({ content: "❌ Unknown campaign action.", ephemeral: true });
+    }
+
     // ===== ADD / REMOVE / RESET =====
     if (sub === "add" || sub === "remove" || sub === "reset") {
       if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to manage stamps.", ephemeral: true });
@@ -941,15 +1156,27 @@ client.on("interactionCreate", async (interaction) => {
       const stampId = overrideStamp || await getStaffStamp(guildId, interaction.user.id);
       const rewardRoleId = await resolveRewardRole(guildId);
 
+      // Resolve campaign (add only)
+      let campaignId = null;
+      if (sub === "add") {
+        const campaignName = interaction.options.getString("campaign")?.toLowerCase().replace(/\s+/g, "_");
+        if (campaignName) {
+          const camp = await getActiveCampaign(guildId, campaignName);
+          if (!camp) {
+            return interaction.editReply(`❌ No active campaign named \`${campaignName}\`. Start it first with \`/stamp campaign action:Start\`.`);
+          }
+          campaignId = camp.id;
+        }
+      }
+
       await upsertCount(guildId, targetUser.id, cardId, next);
       await setStamp(guildId, targetUser.id, stampId);
 
       // Completion with overflow
       if (sub === "add" && current < STAMP_GOAL && next >= STAMP_GOAL) {
         const overflow = next - STAMP_GOAL;
-        const prevTotal = await countCompleted(guildId, targetUser.id);
-        const cardNumber = prevTotal + 1;
-        await insertCompleted(guildId, targetUser.id, cardId, cardNumber);
+        const cardNumber = (await maxCardNumber(guildId, targetUser.id)) + 1;
+        await insertCompleted(guildId, targetUser.id, cardId, cardNumber, campaignId);
         await postCompletedWithImage({ interaction, targetUser, cardId, stampId, count: STAMP_GOAL, cardNumber });
         await deleteCount(guildId, targetUser.id, cardId);
         if (rewardRoleId && !targetMember.roles.cache.has(rewardRoleId)) await targetMember.roles.add(rewardRoleId).catch(() => {});
@@ -960,8 +1187,9 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         const overflowNote = overflow > 0 ? ` **${overflow}** stamp(s) have been carried over to their new card!` : ` They can start collecting again!`;
+        const campNote = campaignId ? ` 🏷️ *Campaign card*` : "";
         return interaction.editReply(
-          `<a:confettipenguin:1489113733845356704> **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! <:medaltop:1489043799307980893>\n${overflowNote}`
+          `<a:confettipenguin:1489113733845356704> **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! <:medaltop:1489043799307980893>${campNote}\n${overflowNote}`
         );
       }
 
