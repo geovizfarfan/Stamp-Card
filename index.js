@@ -810,9 +810,10 @@ client.on("interactionCreate", async (interaction) => {
       for (const row of rows) {
         const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
         const name = member ? member.user.username : `Unknown (${row.user_id})`;
+        const stamps = Math.min(Number(row.current_stamps), STAMP_GOAL);
         const unclaimedNote = row.unclaimed > 0 ? ` — ⏳ ${row.unclaimed} unclaimed` : "";
         const completedNote = row.cards_completed > 0 ? ` — 🏅 ${row.cards_completed} completed` : "";
-        lines.push(`**${rank}.** ${name} — **${row.current_stamps}/${STAMP_GOAL}**${completedNote}${unclaimedNote}`);
+        lines.push(`**${rank}.** ${name} — **${stamps}/${STAMP_GOAL}**${completedNote}${unclaimedNote}`);
         rank++;
       }
 
@@ -1072,7 +1073,7 @@ client.on("interactionCreate", async (interaction) => {
       const cardId = saved?.card_id || saved || "og";
       const stampId = saved?.stamp_id || "black_stamp";
       if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Your saved card is invalid. Run `/stamp setcard` again.", ephemeral: true });
-      const count = await getCount(guildId, user.id, cardId);
+      const count = Math.min(await getCount(guildId, user.id, cardId), STAMP_GOAL);
       const buffer = await renderStampCard(cardId, count, stampId);
       return interaction.reply({
         content: `👑 ${user.username} — **${STAMP_CARDS[cardId].name}** — **${count}/${STAMP_GOAL}**`,
