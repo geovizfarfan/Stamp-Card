@@ -428,7 +428,7 @@ async function getAllMembers(guildId) {
     `SELECT user_id,
       COALESCE((SELECT SUM(count) FROM stamps WHERE guild_id=s.guild_id AND user_id=s.user_id),0) as current_stamps,
       COALESCE((SELECT COUNT(*) FROM completed_cards WHERE guild_id=s.guild_id AND user_id=s.user_id),0) as cards_completed,
-      COALESCE((SELECT COUNT(*) FROM completed_cards WHERE guild_id=s.guild_id AND user_id=s.user_id AND (claimed=FALSE OR claimed IS NULL)),0) as unclaimed
+      COALESCE((SELECT COUNT(*) FROM completed_cards WHERE guild_id=s.guild_id AND user_id=s.user_id AND claimed IS NOT TRUE),0) as unclaimed
      FROM (
        SELECT DISTINCT guild_id, user_id FROM stamps WHERE guild_id=$1
        UNION
@@ -556,7 +556,7 @@ const commands = [
         .addUserOption((o) => o.setName("user").setDescription("User (optional)"))
     )
     .addSubcommand((s) =>
-      s.setName("setcard").setDescription("Choose your stamp card design")
+      s.setName("setcard").setDescription("Choose your stamp card design (all 28 designs)")
         .addStringOption((o) =>
           o.setName("card").setDescription("Search for a card design").setRequired(true).setAutocomplete(true)
         )
@@ -660,7 +660,7 @@ const commands = [
 // =====================
 // REGISTER COMMANDS
 // =====================
-client.once("ready", async () => {
+client.once("clientReady", async () => {
   console.log(`Logged in as ${client.user.tag}`);
   const rest = new REST({ version: "10" }).setToken(TOKEN);
   // Clear all commands first, then re-register fresh
@@ -799,8 +799,8 @@ client.on("interactionCreate", async (interaction) => {
 
     // ===== MEMBERLIST =====
     if (sub === "memberlist") {
-      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to view member list.", ephemeral: true });
-      await interaction.deferReply({ ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to view member list.", flags: 64 });
+      await interaction.deferReply();
 
       const rows = await getAllMembers(guildId);
       if (!rows.length) return interaction.editReply({ content: "📊 No stamp data found for this server." });
@@ -813,7 +813,7 @@ client.on("interactionCreate", async (interaction) => {
         const stamps = Math.min(Number(row.current_stamps), STAMP_GOAL);
         const unclaimedNote = row.unclaimed > 0 ? ` — ⏳ ${row.unclaimed} unclaimed` : "";
         const completedNote = row.cards_completed > 0 ? ` — 🏅 ${row.cards_completed} completed` : "";
-        lines.push(`**${rank}.** ${name} — **${stamps}/${STAMP_GOAL}**${completedNote}${unclaimedNote}`);
+        lines.push(`**${rank}.** ${name} — **${stamps}/${STAMP_GOAL} stamps**${completedNote}${unclaimedNote}`);
         rank++;
       }
 
@@ -831,14 +831,14 @@ client.on("interactionCreate", async (interaction) => {
 
       await interaction.editReply({ content: chunks[0] });
       for (let i = 1; i < chunks.length; i++) {
-        await interaction.followUp({ content: chunks[i], ephemeral: true });
+        await interaction.followUp({ content: chunks[i], flags: 64 });
       }
       return;
     }
 
     // ===== MEMBERSTATS =====
     if (sub === "memberstats") {
-      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to view member stats.", ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to view member stats.", flags: 64 });
       const targetUser = interaction.options.getUser("user", true);
 
       const savedCard = await getCard(guildId, targetUser.id);
@@ -873,15 +873,15 @@ client.on("interactionCreate", async (interaction) => {
       return interaction.reply({
         content: lines.join("\n"),
         allowedMentions: { users: [], roles: [] },
-        ephemeral: true,
+        flags: 64,
       });
     }
 
     // ===== ANNOUNCE =====
     if (sub === "announce") {
-      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to send announcements.", ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to send announcements.", flags: 64 });
       const message = interaction.options.getString("message", true);
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: 64 });
 
       const members = await interaction.guild.members.fetch();
       let sent = 0, failed = 0;
@@ -900,7 +900,7 @@ client.on("interactionCreate", async (interaction) => {
     // ===== LEADERBOARD =====
     if (sub === "leaderboard") {
       const rows = await getLeaderboard(guildId);
-      if (!rows.length) return interaction.reply({ content: "📊 No stamps have been issued yet.", ephemeral: true });
+      if (!rows.length) return interaction.reply({ content: "📊 No stamps have been issued yet.", flags: 64 });
       let rank = 1;
       const lines = [];
       for (const row of rows) {
@@ -960,7 +960,7 @@ client.on("interactionCreate", async (interaction) => {
 
     // ===== DELETE COMPLETED =====
     if (sub === "deletecompleted") {
-      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to do this.", ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to do this.", flags: 64 });
       const targetUser = interaction.options.getUser("user", true);
       const cardNumber = interaction.options.getInteger("card", true);
 
@@ -969,7 +969,7 @@ client.on("interactionCreate", async (interaction) => {
         [guildId, targetUser.id, cardNumber]
       );
       const record = res.rows[0];
-      if (!record) return interaction.reply({ content: `❌ Card #${cardNumber} not found for **${targetUser.username}**.`, ephemeral: true });
+      if (!record) return interaction.reply({ content: `❌ Card #${cardNumber} not found for **${targetUser.username}**.`, flags: 64 });
 
       await pool.query('DELETE FROM completed_cards WHERE id=$1', [record.id]);
 
@@ -981,7 +981,7 @@ client.on("interactionCreate", async (interaction) => {
 
     // ===== CLAIM =====
     if (sub === "claim") {
-      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to mark claims.", ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to mark claims.", flags: 64 });
       const targetUser = interaction.options.getUser("user", true);
       const cardNumber = interaction.options.getInteger("card", true);
       const status = interaction.options.getString("status", true);
@@ -992,7 +992,7 @@ client.on("interactionCreate", async (interaction) => {
         [guildId, targetUser.id, cardNumber]
       );
       const record = res.rows[0];
-      if (!record) return interaction.reply({ content: `❌ Card #${cardNumber} not found for ${targetUser.username}.`, ephemeral: true });
+      if (!record) return interaction.reply({ content: `❌ Card #${cardNumber} not found for ${targetUser.username}.`, flags: 64 });
 
       const claimed = status === 'claimed';
       await setClaimedStatus(record.id, claimed);
@@ -1007,14 +1007,14 @@ client.on("interactionCreate", async (interaction) => {
     // ===== SETSTAMP =====
     if (sub === "setstamp") {
       if (!(await canManage(interaction))) {
-        return interaction.reply({ content: "❌ Only managers can set a stamp preference.", ephemeral: true });
+        return interaction.reply({ content: "❌ Only managers can set a stamp preference.", flags: 64 });
       }
       const stampId = interaction.options.getString("design", true);
-      if (!STAMPS[stampId]) return interaction.reply({ content: "❌ Unknown stamp.", ephemeral: true });
+      if (!STAMPS[stampId]) return interaction.reply({ content: "❌ Unknown stamp.", flags: 64 });
       await setStaffStamp(guildId, interaction.user.id, stampId);
       return interaction.reply({
         content: `✅ Your preferred stamp is now **${STAMPS[stampId].name}**. It will be used automatically when you add stamps.`,
-        ephemeral: true,
+        flags: 64,
       });
     }
 
@@ -1022,13 +1022,13 @@ client.on("interactionCreate", async (interaction) => {
     if (sub === "setcard") {
       const cardId = interaction.options.getString("card", true);
       const targetUser = interaction.options.getUser("user");
-      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Unknown card choice. Please pick from the list.", ephemeral: true });
+      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Unknown card choice. Please pick from the list.", flags: 64 });
 
       const userId = (targetUser && targetUser.id !== interaction.user.id) ? targetUser.id : interaction.user.id;
       const isOther = targetUser && targetUser.id !== interaction.user.id;
 
       if (isOther && !(await canManage(interaction))) {
-        return interaction.reply({ content: "❌ You don't have permission to set another member's card.", ephemeral: true });
+        return interaction.reply({ content: "❌ You don't have permission to set another member's card.", flags: 64 });
       }
 
       // Transfer stamps from old card to new card
@@ -1048,7 +1048,7 @@ client.on("interactionCreate", async (interaction) => {
       const transferNote = transferredCount > 0 ? ` **${transferredCount}** stamp(s) have been transferred to the new card!` : "";
 
       // Render preview with 1 stamp
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: 64 });
       const savedStampInfo = await getCard(guildId, userId);
       const previewStampId = savedStampInfo?.stamp_id || "gold_stamp";
       const previewBuffer = await renderStampCard(cardId, 1, previewStampId);
@@ -1072,7 +1072,7 @@ client.on("interactionCreate", async (interaction) => {
       const saved = await getCard(guildId, user.id);
       const cardId = saved?.card_id || saved || "og";
       const stampId = saved?.stamp_id || "black_stamp";
-      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Your saved card is invalid. Run `/stamp setcard` again.", ephemeral: true });
+      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Your saved card is invalid. Run `/stamp setcard` again.", flags: 64 });
       const count = Math.min(await getCount(guildId, user.id, cardId), STAMP_GOAL);
       const buffer = await renderStampCard(cardId, count, stampId);
       return interaction.reply({
@@ -1085,7 +1085,7 @@ client.on("interactionCreate", async (interaction) => {
     if (sub === "resetall") {
       const isOwner = interaction.guild.ownerId === interaction.user.id;
       const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
-      if (!isOwner && !isAdmin) return interaction.reply({ content: "❌ Only the server owner or admins can reset the entire server.", ephemeral: true });
+      if (!isOwner && !isAdmin) return interaction.reply({ content: "❌ Only the server owner or admins can reset the entire server.", flags: 64 });
       await resetAll(guildId);
       await logResetAll({ interaction });
       return interaction.reply("♻️ **Server reset complete.** All stamp cards are back to **0**.");
@@ -1095,36 +1095,36 @@ client.on("interactionCreate", async (interaction) => {
     if (sub === "setchannel") {
       const isOwner = interaction.guild.ownerId === interaction.user.id;
       const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
-      if (!isOwner && !isAdmin) return interaction.reply({ content: "❌ Only the server owner or admins can set channels.", ephemeral: true });
+      if (!isOwner && !isAdmin) return interaction.reply({ content: "❌ Only the server owner or admins can set channels.", flags: 64 });
       const type = interaction.options.getString("type", true);
       const channel = interaction.options.getChannel("channel", true);
-      if (!channel.isTextBased()) return interaction.reply({ content: "❌ Please select a text channel.", ephemeral: true });
+      if (!channel.isTextBased()) return interaction.reply({ content: "❌ Please select a text channel.", flags: 64 });
       await setGuildChannel(guildId, type, channel.id);
       const label = type === "log" ? "📋 Stamp Log" : "🎉 Completed Cards";
-      return interaction.reply({ content: `✅ **${label}** channel set to ${channel}.`, ephemeral: true });
+      return interaction.reply({ content: `✅ **${label}** channel set to ${channel}.`, flags: 64 });
     }
 
     // ===== SETUP =====
     if (sub === "setup") {
       const isOwner = interaction.guild.ownerId === interaction.user.id;
       const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
-      if (!isOwner && !isAdmin) return interaction.reply({ content: "❌ Only the server owner or admins can configure the bot.", ephemeral: true });
+      if (!isOwner && !isAdmin) return interaction.reply({ content: "❌ Only the server owner or admins can configure the bot.", flags: 64 });
       const type = interaction.options.getString("type", true);
       const role = interaction.options.getRole("role", true);
       await setGuildRole(guildId, type, role.id);
       const label = type === "manager" ? "🛡️ Manager Role" : "🏆 Reward Role";
-      return interaction.reply({ content: `✅ **${label}** set to ${role}. Staff with this role can now manage stamps.`, ephemeral: true });
+      return interaction.reply({ content: `✅ **${label}** set to ${role}. Staff with this role can now manage stamps.`, flags: 64 });
     }
 
     // ===== CAMPAIGN =====
     if (sub === "campaign") {
-      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to manage campaigns.", ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to manage campaigns.", flags: 64 });
       const action = interaction.options.getString("action", true);
       const name = interaction.options.getString("name")?.toLowerCase().replace(/\s+/g, "_");
       const label = interaction.options.getString("label");
 
       if (action === "start") {
-        if (!name) return interaction.reply({ content: "❌ Provide a `name` for the campaign (e.g. `summer2025`).", ephemeral: true });
+        if (!name) return interaction.reply({ content: "❌ Provide a `name` for the campaign (e.g. `summer2025`).", flags: 64 });
         const displayLabel = label || name;
         const id = await createCampaign(guildId, name, displayLabel);
         return interaction.reply({
@@ -1134,14 +1134,14 @@ client.on("interactionCreate", async (interaction) => {
       }
 
       if (action === "end") {
-        if (!name) return interaction.reply({ content: "❌ Provide the campaign `name` to end.", ephemeral: true });
+        if (!name) return interaction.reply({ content: "❌ Provide the campaign `name` to end.", flags: 64 });
         await endCampaign(guildId, name);
         return interaction.reply({ content: `🛑 Campaign **\`${name}\`** has been ended.` });
       }
 
       if (action === "list") {
         const rows = await listCampaigns(guildId);
-        if (!rows.length) return interaction.reply({ content: "📋 No campaigns found for this server.", ephemeral: true });
+        if (!rows.length) return interaction.reply({ content: "📋 No campaigns found for this server.", flags: 64 });
         const lines = rows.map(r => {
           const status = r.active ? "🟢 Active" : "🔴 Ended";
           const since = `<t:${Math.floor(r.created_at / 1000)}:D>`;
@@ -1151,12 +1151,12 @@ client.on("interactionCreate", async (interaction) => {
       }
 
       if (action === "leaderboard") {
-        if (!name) return interaction.reply({ content: "❌ Provide the campaign `name` to view its leaderboard.", ephemeral: true });
+        if (!name) return interaction.reply({ content: "❌ Provide the campaign `name` to view its leaderboard.", flags: 64 });
         const campaign = await pool.query("SELECT * FROM campaigns WHERE guild_id=$1 AND name=$2", [guildId, name]);
         const c = campaign.rows[0];
-        if (!c) return interaction.reply({ content: `❌ Campaign \`${name}\` not found.`, ephemeral: true });
+        if (!c) return interaction.reply({ content: `❌ Campaign \`${name}\` not found.`, flags: 64 });
         const rows = await getCampaignLeaderboard(guildId, c.id);
-        if (!rows.length) return interaction.reply({ content: `📊 No completed cards yet for **${c.label}**.`, ephemeral: true });
+        if (!rows.length) return interaction.reply({ content: `📊 No completed cards yet for **${c.label}**.`, flags: 64 });
         const lines = [];
         let rank = 1;
         for (const row of rows) {
@@ -1171,21 +1171,21 @@ client.on("interactionCreate", async (interaction) => {
         });
       }
 
-      return interaction.reply({ content: "❌ Unknown campaign action.", ephemeral: true });
+      return interaction.reply({ content: "❌ Unknown campaign action.", flags: 64 });
     }
 
     // ===== ADD / REMOVE / RESET =====
     if (sub === "add" || sub === "remove" || sub === "reset") {
-      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to manage stamps.", ephemeral: true });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to manage stamps.", flags: 64 });
       await interaction.deferReply();
 
       const targetUser = interaction.options.getUser("user", true);
       const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      if (!targetMember) return interaction.reply({ content: "❌ I can't find that member in this server.", ephemeral: true });
+      if (!targetMember) return interaction.reply({ content: "❌ I can't find that member in this server.", flags: 64 });
 
       const savedCard = await getCard(guildId, targetUser.id);
       const cardId = savedCard?.card_id || savedCard || "og";
-      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`.", ephemeral: true });
+      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`.", flags: 64 });
 
       // RESET
       if (sub === "reset") {
@@ -1261,14 +1261,14 @@ client.on("interactionCreate", async (interaction) => {
       return interaction.editReply(`✅ ${targetUser.username} now has **${next}/${STAMP_GOAL}** on **${STAMP_CARDS[cardId].name}**.`);
     }
 
-    return interaction.reply({ content: "❌ Unknown subcommand.", ephemeral: true });
+    return interaction.reply({ content: "❌ Unknown subcommand.", flags: 64 });
 
   } catch (err) {
     console.error("Interaction error:", err);
     const msg = "❌ Something went wrong while running that command.";
     if (interaction.isRepliable()) {
-      if (interaction.deferred || interaction.replied) await interaction.followUp({ content: msg, ephemeral: true }).catch(() => {});
-      else await interaction.reply({ content: msg, ephemeral: true }).catch(() => {});
+      if (interaction.deferred || interaction.replied) await interaction.followUp({ content: msg, flags: 64 }).catch(() => {});
+      else await interaction.reply({ content: msg, flags: 64 }).catch(() => {});
     }
   }
 });
