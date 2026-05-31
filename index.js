@@ -423,9 +423,24 @@ async function getLeaderboard(guildId) {
   return res.rows;
 }
 
-// =====================
-// GUILD SETTINGS
-// =====================
+async function getAllMembers(guildId) {
+  const res = await pool.query(
+    `SELECT user_id,
+      COALESCE((SELECT SUM(count) FROM stamps WHERE guild_id=s.guild_id AND user_id=s.user_id),0) as current_stamps,
+      COALESCE((SELECT COUNT(*) FROM completed_cards WHERE guild_id=s.guild_id AND user_id=s.user_id),0) as cards_completed,
+      COALESCE((SELECT COUNT(*) FROM completed_cards WHERE guild_id=s.guild_id AND user_id=s.user_id AND (claimed=FALSE OR claimed IS NULL)),0) as unclaimed
+     FROM (
+       SELECT DISTINCT guild_id, user_id FROM stamps WHERE guild_id=$1
+       UNION
+       SELECT DISTINCT guild_id, user_id FROM completed_cards WHERE guild_id=$1
+     ) s WHERE guild_id=$1
+     ORDER BY cards_completed DESC, current_stamps DESC`,
+    [guildId]
+  );
+  return res.rows;
+}
+
+
 async function getGuildSettings(guildId) {
   const res = await pool.query("SELECT * FROM guild_settings WHERE guild_id=$1", [guildId]);
   return res.rows[0] || null;
@@ -516,6 +531,9 @@ const commands = [
     .setName("stamp")
     .setDescription("Stamp card system")
 
+    .addSubcommand((s) =>
+      s.setName("memberlist").setDescription("Show all members' stamp counts (managers only)")
+    )
     .addSubcommand((s) =>
       s.setName("memberstats").setDescription("Show a member's full stamp record (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("Member to look up").setRequired(true))
@@ -778,6 +796,44 @@ client.on("interactionCreate", async (interaction) => {
   try {
     const sub = interaction.options.getSubcommand();
     const guildId = interaction.guild.id;
+
+    // ===== MEMBERLIST =====
+    if (sub === "memberlist") {
+      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to view member list.", ephemeral: true });
+      await interaction.deferReply({ ephemeral: true });
+
+      const rows = await getAllMembers(guildId);
+      if (!rows.length) return interaction.editReply({ content: "📊 No stamp data found for this server." });
+
+      const lines = [];
+      let rank = 1;
+      for (const row of rows) {
+        const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
+        const name = member ? member.user.username : `Unknown (${row.user_id})`;
+        const unclaimedNote = row.unclaimed > 0 ? ` — ⏳ ${row.unclaimed} unclaimed` : "";
+        const completedNote = row.cards_completed > 0 ? ` — 🏅 ${row.cards_completed} completed` : "";
+        lines.push(`**${rank}.** ${name} — **${row.current_stamps}/${STAMP_GOAL}**${completedNote}${unclaimedNote}`);
+        rank++;
+      }
+
+      // Discord has a 2000 char limit — split into chunks if needed
+      const chunks = [];
+      let current = `## 📋 All Members — Stamp Counts\n\n`;
+      for (const line of lines) {
+        if ((current + line + "\n").length > 1900) {
+          chunks.push(current);
+          current = "";
+        }
+        current += line + "\n";
+      }
+      if (current) chunks.push(current);
+
+      await interaction.editReply({ content: chunks[0] });
+      for (let i = 1; i < chunks.length; i++) {
+        await interaction.followUp({ content: chunks[i], ephemeral: true });
+      }
+      return;
+    }
 
     // ===== MEMBERSTATS =====
     if (sub === "memberstats") {
