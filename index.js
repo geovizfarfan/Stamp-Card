@@ -590,11 +590,11 @@ const commands = [
       s.setName("add").setDescription("Add stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
         .addStringOption((o) =>
-          o.setName("design").setDescription("Override your saved stamp for this action (optional)").addChoices(...STAMP_CHOICES)
+          o.setName("campaign").setDescription("Tag this stamp to an active campaign").setRequired(true).setAutocomplete(true)
         )
         .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setMinValue(1))
         .addStringOption((o) =>
-          o.setName("campaign").setDescription("Tag this stamp to an active campaign").setRequired(true).setAutocomplete(true)
+          o.setName("design").setDescription("Override your saved stamp for this action (optional)").addChoices(...STAMP_CHOICES)
         )
     )
     .addSubcommand((s) =>
