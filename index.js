@@ -532,6 +532,12 @@ const commands = [
     .setDescription("Stamp card system")
 
     .addSubcommand((s) =>
+      s.setName("reassign").setDescription("Assign all existing stamps/completed cards to a campaign (managers only)")
+        .addStringOption((o) =>
+          o.setName("campaign").setDescription("Campaign to assign all existing stamps to").setRequired(true).setAutocomplete(true)
+        )
+    )
+    .addSubcommand((s) =>
       s.setName("memberlist").setDescription("Show all members' stamp counts (managers only)")
     )
     .addSubcommand((s) =>
@@ -588,7 +594,7 @@ const commands = [
         )
         .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setMinValue(1))
         .addStringOption((o) =>
-          o.setName("campaign").setDescription("Tag this stamp to an active campaign (optional)").setAutocomplete(true)
+          o.setName("campaign").setDescription("Tag this stamp to an active campaign").setRequired(true).setAutocomplete(true)
         )
     )
     .addSubcommand((s) =>
@@ -708,34 +714,40 @@ async function sendToChannel(channelId, payload) {
   await channel.send(payload);
 }
 
-async function logStampWithImage({ interaction, targetUser, cardId, stampId, action, count }) {
+async function logStampWithImage({ interaction, targetUser, cardId, stampId, action, count, campaignLabel, reason }) {
   const logChannelId = await resolveChannel(interaction.guildId, "log");
   if (!logChannelId) return;
   const buffer = await renderStampCard(cardId, count, stampId);
+  const campaignLine = campaignLabel ? `\n<:BULLET:1488760457073524947> **Campaign:** ${campaignLabel}` : "";
+  const reasonLine = reason ? `\n<:BULLET:1488760457073524947> **Reason:** ${reason}` : "";
   await sendToChannel(logChannelId, {
     content:
       `## <:receipts:1488760952924143616> Stamp Transcript\n` +
       `<:BULLET:1488760457073524947> **Member:** ${targetUser}\n` +
       `<:BULLET:1488760457073524947> **Action:** ${action}\n` +
       `<:BULLET:1488760457073524947> **Card:** **${STAMP_CARDS[cardId].name}**\n` +
-      `<:BULLET:1488760457073524947> **Total:** **${count}/${STAMP_GOAL}**\n` +
-      `<:BULLET:1488760457073524947> **By:** ${interaction.user}\n` +
+      `<:BULLET:1488760457073524947> **Total:** **${count}/${STAMP_GOAL}**` +
+      campaignLine +
+      reasonLine +
+      `\n<:BULLET:1488760457073524947> **By:** ${interaction.user}\n` +
       `<:BULLET:1488760457073524947> **When:** <t:${Math.floor(Date.now() / 1000)}:F>`,
     files: [{ attachment: buffer, name: "stamp-card.png" }],
     allowedMentions: { users: [], roles: [] },
   });
 }
 
-async function postCompletedWithImage({ interaction, targetUser, cardId, stampId, count, cardNumber }) {
+async function postCompletedWithImage({ interaction, targetUser, cardId, stampId, count, cardNumber, campaignLabel }) {
   const completedChannelId = await resolveChannel(interaction.guildId, "completed");
   if (!completedChannelId) return;
   const buffer = await renderStampCard(cardId, count, stampId);
+  const campLine = campaignLabel ? `\n<:BULLET:1488760457073524947> **Campaign:** ${campaignLabel}` : "";
   await sendToChannel(completedChannelId, {
     content:
       `## <a:8720rainbowconfetti:1488749313130762383> STAMP CARD COMPLETED! <a:8720rainbowconfetti:1488749313130762383>\n` +
       `<a:2313purplecrown:1488749776571863091> **Member:** ${targetUser}\n` +
-      `<a:5707lightpurplecheck:1488750465804926976> **Total:** **${count}/${STAMP_GOAL}**\n` +
-      `<:518169rolemodpurple:1488750784785940663> **Verified By:** ${interaction.user}\n` +
+      `<a:5707lightpurplecheck:1488750465804926976> **Card #${cardNumber}:** **${STAMP_CARDS[cardId].name}**` +
+      campLine +
+      `\n<:518169rolemodpurple:1488750784785940663> **Verified By:** ${interaction.user}\n` +
       `<:18953bulletpoint:1488751383027912797> <t:${Math.floor(Date.now() / 1000)}:F>`,
     files: [{ attachment: buffer, name: "completed-stamp-card.png" }],
     allowedMentions: { users: [], roles: [] },
@@ -787,7 +799,7 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.respond(choices);
   }
 
-  if (sub === "add" && focused.name === "campaign") {
+  if ((sub === "add" || sub === "reassign") && focused.name === "campaign") {
     const rows = await pool.query(
       `SELECT name, label FROM campaigns WHERE guild_id=$1 AND active=TRUE ORDER BY created_at DESC LIMIT 25`,
       [interaction.guildId]
@@ -799,8 +811,15 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   if (sub === "campaign" && focused.name === "name") {
+    const action = interaction.options.getString("action");
+    // For "end" and "leaderboard" — only show active campaigns
+    // For "start" — show nothing (it's a new name, free text would be better but autocomplete can show existing for reference)
+    // For all — show relevant ones
+    const activeOnly = action === "end";
     const rows = await pool.query(
-      `SELECT name, label, active FROM campaigns WHERE guild_id=$1 ORDER BY active DESC, created_at DESC LIMIT 25`,
+      activeOnly
+        ? `SELECT name, label, active FROM campaigns WHERE guild_id=$1 AND active=TRUE ORDER BY created_at DESC LIMIT 25`
+        : `SELECT name, label, active FROM campaigns WHERE guild_id=$1 ORDER BY active DESC, created_at DESC LIMIT 25`,
       [interaction.guildId]
     );
     const choices = rows.rows
@@ -820,6 +839,34 @@ client.on("interactionCreate", async (interaction) => {
   try {
     const sub = interaction.options.getSubcommand();
     const guildId = interaction.guild.id;
+
+    // ===== REASSIGN =====
+    if (sub === "reassign") {
+      if (!(await canManage(interaction))) return interaction.reply({ content: "<:wrong:1510784077794377838> You don't have permission.", flags: 64 });
+      await interaction.deferReply({ flags: 64 });
+
+      const campaignName = interaction.options.getString("campaign", true);
+      const camp = await getActiveCampaign(guildId, campaignName);
+      if (!camp) return interaction.editReply(`<:wrong:1510784077794377838> No active campaign named \`${campaignName}\`.`);
+
+      // Assign all stamps and completed_cards in this guild that have no campaign to this campaign
+      const stampsRes = await pool.query(
+        `UPDATE stamps SET campaign_id=$1 WHERE guild_id=$2 AND (campaign_id IS NULL) RETURNING user_id`,
+        [camp.id, guildId]
+      );
+      const completedRes = await pool.query(
+        `UPDATE completed_cards SET campaign_id=$1 WHERE guild_id=$2 AND (campaign_id IS NULL) RETURNING id`,
+        [camp.id, guildId]
+      );
+
+      const uniqueMembers = new Set(stampsRes.rows.map(r => r.user_id)).size;
+      return interaction.editReply(
+        `<:checkmark:1510784068487479318> **Reassign complete!**\n` +
+        `<:BULLET:1488760457073524947> Campaign: **${camp.label}**\n` +
+        `<:BULLET:1488760457073524947> Stamp records updated: **${stampsRes.rowCount}** (${uniqueMembers} members)\n` +
+        `<:BULLET:1488760457073524947> Completed cards updated: **${completedRes.rowCount}**`
+      );
+    }
 
     // ===== MEMBERLIST =====
     if (sub === "memberlist") {
@@ -1233,17 +1280,17 @@ client.on("interactionCreate", async (interaction) => {
       const stampId = overrideStamp || await getStaffStamp(guildId, interaction.user.id);
       const rewardRoleId = await resolveRewardRole(guildId);
 
-      // Resolve campaign (add only)
+      // Resolve campaign
       let campaignId = null;
+      let campaignLabel = null;
       if (sub === "add") {
-        const campaignName = interaction.options.getString("campaign")?.toLowerCase().replace(/\s+/g, "_");
-        if (campaignName) {
-          const camp = await getActiveCampaign(guildId, campaignName);
-          if (!camp) {
-            return interaction.editReply(`❌ No active campaign named \`${campaignName}\`. Start it first with \`/stamp campaign action:Start\`.`);
-          }
-          campaignId = camp.id;
+        const campaignName = interaction.options.getString("campaign", true);
+        const camp = await getActiveCampaign(guildId, campaignName);
+        if (!camp) {
+          return interaction.editReply(`<:wrong:1510784077794377838> No active campaign named \`${campaignName}\`. Start one first with \`/stamp campaign action:Start\`.`);
         }
+        campaignId = camp.id;
+        campaignLabel = camp.label;
       }
 
       await upsertCount(guildId, targetUser.id, cardId, next);
@@ -1254,35 +1301,43 @@ client.on("interactionCreate", async (interaction) => {
         const overflow = next - STAMP_GOAL;
         const cardNumber = (await maxCardNumber(guildId, targetUser.id)) + 1;
         await insertCompleted(guildId, targetUser.id, cardId, cardNumber, campaignId);
-        await postCompletedWithImage({ interaction, targetUser, cardId, stampId, count: STAMP_GOAL, cardNumber });
+        await postCompletedWithImage({ interaction, targetUser, cardId, stampId, count: STAMP_GOAL, cardNumber, campaignLabel });
         await deleteCount(guildId, targetUser.id, cardId);
         if (rewardRoleId && !targetMember.roles.cache.has(rewardRoleId)) await targetMember.roles.add(rewardRoleId).catch(() => {});
-        await logStampWithImage({ interaction, targetUser, cardId, stampId, action: `🏅 Card #${cardNumber} COMPLETED & reset for next card`, count: STAMP_GOAL });
+        await logStampWithImage({ interaction, targetUser, cardId, stampId, action: `🏅 Card #${cardNumber} COMPLETED`, count: STAMP_GOAL, campaignLabel });
 
-        if (overflow > 0) {
-          await upsertCount(guildId, targetUser.id, cardId, overflow);
-        }
+        if (overflow > 0) await upsertCount(guildId, targetUser.id, cardId, overflow);
 
-        const overflowNote = overflow > 0 ? ` **${overflow}** stamp(s) have been carried over to their new card!` : ` They can start collecting again!`;
-        const campNote = campaignId ? ` 🏷️ *Campaign card*` : "";
+        const overflowNote = overflow > 0 ? ` **${overflow}** stamp(s) carried over!` : ` They can start collecting again!`;
         return interaction.editReply(
-          `<a:confettipenguin:1489113733845356704> **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! <:medaltop:1489043799307980893>${campNote}\n${overflowNote}`
+          `<a:confettipenguin:1489113733845356704> **${targetUser.username}** has completed **${STAMP_CARDS[cardId].name}** (Card #${cardNumber})! <:medaltop:1489043799307980893>\n` +
+          `<:BULLET:1488760457073524947> Campaign: **${campaignLabel}**\n${overflowNote}`
         );
       }
 
       if (rewardRoleId && next >= STAMP_GOAL && !targetMember.roles.cache.has(rewardRoleId)) await targetMember.roles.add(rewardRoleId).catch(() => {});
       if (rewardRoleId && next < STAMP_GOAL && targetMember.roles.cache.has(rewardRoleId)) await targetMember.roles.remove(rewardRoleId).catch(() => {});
 
+      const reason = sub === "remove" ? interaction.options.getString("reason", true) : null;
+
       await logStampWithImage({
         interaction, targetUser, cardId, stampId,
         action: sub === "add" ? `➕ Added ${amount} (${current} → ${next})` : `➖ Removed ${amount} (${current} → ${next})`,
         count: next,
+        campaignLabel,
+        reason,
       });
+
       if (sub === "add") {
-        return interaction.editReply(`<:checkmark:1510784068487479318> **${targetUser.username}** now has **${next}/${STAMP_GOAL}** <a:confettipenguin:1489113733845356704>`);
+        return interaction.editReply(
+          `<:checkmark:1510784068487479318> **${targetUser.username}** now has **${next}/${STAMP_GOAL}** <a:confettipenguin:1489113733845356704>\n` +
+          `<:BULLET:1488760457073524947> Campaign: **${campaignLabel}**`
+        );
       } else {
-        const reason = interaction.options.getString("reason", true);
-        return interaction.editReply(`<:checkmark:1510784068487479318> **${targetUser.username}** now has **${next}/${STAMP_GOAL}**\n<:receipts:1488760952924143616> Reason: ${reason}`);
+        return interaction.editReply(
+          `<:checkmark:1510784068487479318> **${targetUser.username}** now has **${next}/${STAMP_GOAL}**\n` +
+          `<:receipts:1488760952924143616> Reason: ${reason}`
+        );
       }
     }
 
