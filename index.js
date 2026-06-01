@@ -665,6 +665,7 @@ const commands = [
     .addSubcommand((s) =>
       s.setName("remove").setDescription("Remove stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
+        .addStringOption((o) => o.setName("campaign").setDescription("Campaign to remove stamps from").setRequired(true).setAutocomplete(true))
         .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setRequired(true).setMinValue(1))
         .addStringOption((o) => o.setName("reason").setDescription("Reason for removing stamps").setRequired(true))
     )
@@ -855,6 +856,7 @@ client.on("interactionCreate", async (interaction) => {
   if (interaction.commandName !== "stamp") return;
   const sub = interaction.options.getSubcommand();
   const focused = interaction.options.getFocused(true);
+  console.log(`Autocomplete triggered: sub=${sub} focused=${focused.name} guild=${interaction.guildId}`);
 
   try {  if ((sub === "setcard" || sub === "reset") && focused.name === "card") {
     const choices = Object.entries(STAMP_CARDS)
@@ -875,7 +877,7 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.respond(choices);
   }
 
-  if ((sub === "add" || sub === "reassign") && focused.name === "campaign") {
+  if ((sub === "add" || sub === "remove" || sub === "reassign") && focused.name === "campaign") {
     const rows = await pool.query(
       `SELECT name, label FROM campaigns WHERE guild_id=$1 AND active=TRUE ORDER BY created_at DESC LIMIT 25`,
       [interaction.guildId]
@@ -1404,9 +1406,38 @@ client.on("interactionCreate", async (interaction) => {
       const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
       if (!targetMember) return interaction.editReply({ content: "❌ I can't find that member in this server." });
 
-      const savedCard = await getCard(guildId, targetUser.id);
-      const cardId = savedCard?.card_id || savedCard || "og";
-      if (!STAMP_CARDS[cardId]) return interaction.editReply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`." });
+      // For add: resolve campaign first, then get card from user_campaign_cards
+      let cardId, campaignId = null, campaignLabel = null;
+
+      if (sub === "add") {
+        const campaignName = interaction.options.getString("campaign", true);
+        const camp = await getActiveCampaign(guildId, campaignName);
+        if (!camp) return interaction.editReply(`<:wrong:1510784077794377838> No active campaign named \`${campaignName}\`. Start one first with \`/stamp campaign action:Start\`.`);
+        campaignId = camp.id;
+        campaignLabel = camp.label;
+
+        // Get card from user_campaign_cards for this campaign
+        const campCard = await getCampaignCard(guildId, targetUser.id, campaignId);
+        if (!campCard) return interaction.editReply(`<:wrong:1510784077794377838> **${targetUser.username}** hasn't set a card for **${campaignLabel}** yet. Ask them to run \`/stamp setcard\` and select the **${campaignLabel}** campaign.`);
+        cardId = campCard.card_id;
+      } else if (sub === "remove") {
+        const campaignName = interaction.options.getString("campaign", true);
+        const camp = await pool.query(`SELECT * FROM campaigns WHERE guild_id=$1 AND name=$2`, [guildId, campaignName]);
+        const c = camp.rows[0];
+        if (!c) return interaction.editReply(`<:wrong:1510784077794377838> Campaign not found.`);
+        campaignId = c.id;
+        campaignLabel = c.label;
+        const campCard = await getCampaignCard(guildId, targetUser.id, campaignId);
+        cardId = campCard?.card_id;
+        if (!cardId || !STAMP_CARDS[cardId]) return interaction.editReply(`<:wrong:1510784077794377838> **${targetUser.username}** hasn't set a card for **${campaignLabel}** yet.`);
+      } else {
+        // reset — use default saved card
+        const savedCard = await getCard(guildId, targetUser.id);
+        cardId = savedCard?.card_id || savedCard;
+        if (!cardId || !STAMP_CARDS[cardId]) return interaction.editReply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`." });
+      }
+
+      if (!STAMP_CARDS[cardId]) return interaction.editReply({ content: `❌ Card \`${cardId}\` not found. Ask the user to run \`/stamp setcard\`.` });
 
       // RESET
       if (sub === "reset") {
@@ -1426,24 +1457,13 @@ client.on("interactionCreate", async (interaction) => {
         return interaction.editReply(`♻️ Reset complete. ${targetUser.username} is now **0/${STAMP_GOAL}** on **${STAMP_CARDS[activeCardId].name}**.${cardSwitchNote}`);
       }
 
-      // ADD / REMOVE
       const amount = interaction.options.getInteger("amount") || 1;
       const overrideStamp = interaction.options.getString("design");
-      const stampId = overrideStamp || await getStaffStamp(guildId, interaction.user.id);
       const rewardRoleId = await resolveRewardRole(guildId);
 
-      // Resolve campaign
-      let campaignId = null;
-      let campaignLabel = null;
-      if (sub === "add") {
-        const campaignName = interaction.options.getString("campaign", true);
-        const camp = await getActiveCampaign(guildId, campaignName);
-        if (!camp) {
-          return interaction.editReply(`<:wrong:1510784077794377838> No active campaign named \`${campaignName}\`. Start one first with \`/stamp campaign action:Start\`.`);
-        }
-        campaignId = camp.id;
-        campaignLabel = camp.label;
-      }
+      // Get stamp — from campaign card preference or staff stamp
+      const campCard = sub === "add" ? await getCampaignCard(guildId, targetUser.id, campaignId) : null;
+      const stampId = overrideStamp || campCard?.stamp_id || await getStaffStamp(guildId, interaction.user.id);
 
       const current = await getCount(guildId, targetUser.id, cardId, campaignId);
       const next = sub === "add" ? current + amount : Math.max(0, current - amount);
