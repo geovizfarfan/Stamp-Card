@@ -7,10 +7,6 @@ const {
   Routes,
   SlashCommandBuilder,
   PermissionFlagsBits,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ComponentType,
 } = require("discord.js");
 const { Pool } = require("pg");
 const path = require("path");
@@ -316,26 +312,7 @@ async function initDB() {
       UNIQUE(guild_id, name)
     )
   `);
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS user_campaign_cards (
-      guild_id TEXT, user_id TEXT, campaign_id INTEGER REFERENCES campaigns(id) ON DELETE CASCADE,
-      card_id TEXT, stamp_id TEXT,
-      PRIMARY KEY (guild_id, user_id, campaign_id)
-    )
-  `);
   await pool.query(`ALTER TABLE stamps ADD COLUMN IF NOT EXISTS campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL`);
-  // Migrate primary key to include campaign_id for per-campaign stamp tracking
-  await pool.query(`
-    DO $$ BEGIN
-      IF NOT EXISTS (
-        SELECT 1 FROM pg_indexes WHERE tablename='stamps' AND indexname='stamps_campaign_pk'
-      ) THEN
-        ALTER TABLE stamps DROP CONSTRAINT IF EXISTS stamps_pkey;
-        ALTER TABLE stamps ADD COLUMN IF NOT EXISTS id SERIAL;
-        CREATE UNIQUE INDEX IF NOT EXISTS stamps_campaign_pk ON stamps(guild_id, user_id, card_id, COALESCE(campaign_id, -1));
-      END IF;
-    END $$;
-  `).catch(() => {});
   await pool.query(`ALTER TABLE completed_cards ADD COLUMN IF NOT EXISTS campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL`);
   console.log("✅ Database tables ready.");
 }
@@ -343,33 +320,19 @@ async function initDB() {
 // =====================
 // DB HELPERS
 // =====================
-async function getCount(guildId, userId, cardId, campaignId = null) {
-  const res = await pool.query(
-    `SELECT count FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND COALESCE(campaign_id,-1)=COALESCE($4,-1)`,
-    [guildId, userId, cardId, campaignId]
-  );
+async function getCount(guildId, userId, cardId) {
+  const res = await pool.query("SELECT count FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3", [guildId, userId, cardId]);
   return res.rows[0]?.count || 0;
 }
-async function upsertCount(guildId, userId, cardId, count, campaignId = null) {
+async function upsertCount(guildId, userId, cardId, count) {
   await pool.query(
-    `INSERT INTO stamps (guild_id, user_id, card_id, count, updated_at, campaign_id)
-     VALUES ($1,$2,$3,$4,$5,$6)
-     ON CONFLICT ON CONSTRAINT stamps_campaign_pk
-     DO UPDATE SET count=EXCLUDED.count, updated_at=EXCLUDED.updated_at`,
-    [guildId, userId, cardId, count, Date.now(), campaignId]
-  ).catch(async () => {
-    // Fallback if constraint not yet migrated
-    await pool.query(
-      `UPDATE stamps SET count=$4, updated_at=$5 WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND COALESCE(campaign_id,-1)=COALESCE($6,-1)`,
-      [guildId, userId, cardId, count, Date.now(), campaignId]
-    );
-  });
-}
-async function deleteCount(guildId, userId, cardId, campaignId = null) {
-  await pool.query(
-    `DELETE FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND COALESCE(campaign_id,-1)=COALESCE($4,-1)`,
-    [guildId, userId, cardId, campaignId]
+    `INSERT INTO stamps (guild_id, user_id, card_id, count, updated_at) VALUES ($1,$2,$3,$4,$5)
+     ON CONFLICT (guild_id, user_id, card_id) DO UPDATE SET count=EXCLUDED.count, updated_at=EXCLUDED.updated_at`,
+    [guildId, userId, cardId, count, Date.now()]
   );
+}
+async function deleteCount(guildId, userId, cardId) {
+  await pool.query("DELETE FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3", [guildId, userId, cardId]);
 }
 async function getCard(guildId, userId) {
   const res = await pool.query("SELECT card_id, stamp_id FROM user_cards WHERE guild_id=$1 AND user_id=$2", [guildId, userId]);
@@ -473,40 +436,6 @@ async function getAllMembers(guildId) {
      ) s WHERE guild_id=$1
      ORDER BY cards_completed DESC, current_stamps DESC`,
     [guildId]
-  );
-  return res.rows;
-}
-
-async function getCampaignCard(guildId, userId, campaignId) {
-  const res = await pool.query(
-    `SELECT card_id, stamp_id FROM user_campaign_cards WHERE guild_id=$1 AND user_id=$2 AND campaign_id=$3`,
-    [guildId, userId, campaignId]
-  );
-  return res.rows[0] || null;
-}
-async function setCampaignCard(guildId, userId, campaignId, cardId, stampId) {
-  await pool.query(
-    `INSERT INTO user_campaign_cards (guild_id, user_id, campaign_id, card_id, stamp_id) VALUES ($1,$2,$3,$4,$5)
-     ON CONFLICT (guild_id, user_id, campaign_id) DO UPDATE SET card_id=EXCLUDED.card_id, stamp_id=COALESCE(EXCLUDED.stamp_id, user_campaign_cards.stamp_id)`,
-    [guildId, userId, campaignId, cardId, stampId]
-  );
-}
-async function setCampaignStamp(guildId, userId, campaignId, stampId) {
-  await pool.query(
-    `INSERT INTO user_campaign_cards (guild_id, user_id, campaign_id, card_id, stamp_id) VALUES ($1,$2,$3,'og',$4)
-     ON CONFLICT (guild_id, user_id, campaign_id) DO UPDATE SET stamp_id=EXCLUDED.stamp_id`,
-    [guildId, userId, campaignId, stampId]
-  );
-}
-
-async function getCampaignStampsForUser(guildId, userId) {
-  const res = await pool.query(
-    `SELECT c.label, c.id, SUM(s.count) as total
-     FROM stamps s
-     JOIN campaigns c ON s.campaign_id = c.id
-     WHERE s.guild_id=$1 AND s.user_id=$2
-     GROUP BY c.id, c.label ORDER BY c.created_at DESC`,
-    [guildId, userId]
   );
   return res.rows;
 }
@@ -633,15 +562,9 @@ const commands = [
         .addUserOption((o) => o.setName("user").setDescription("User (optional)"))
     )
     .addSubcommand((s) =>
-      s.setName("setcard").setDescription("Choose your stamp card design")
+      s.setName("setcard").setDescription("Choose your stamp card design (all 28 designs)")
         .addStringOption((o) =>
           o.setName("card").setDescription("Search for a card design").setRequired(true).setAutocomplete(true)
-        )
-        .addStringOption((o) =>
-          o.setName("campaign").setDescription("Set card for a specific campaign (leave blank for default)").setAutocomplete(true)
-        )
-        .addStringOption((o) =>
-          o.setName("stamp").setDescription("Also set your stamp design for this campaign").addChoices(...STAMP_CHOICES)
         )
         .addUserOption((o) => o.setName("user").setDescription("Set card for this user (managers only)"))
     )
@@ -876,17 +799,6 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.respond(choices);
   }
 
-  if (sub === "setcard" && focused.name === "campaign") {
-    const rows = await pool.query(
-      `SELECT name, label FROM campaigns WHERE guild_id=$1 AND active=TRUE ORDER BY created_at DESC LIMIT 25`,
-      [interaction.guildId]
-    );
-    const choices = rows.rows
-      .filter(r => r.label.toLowerCase().includes(focused.value.toLowerCase()))
-      .map(r => ({ name: `🟢 ${r.label}`, value: r.name }));
-    return interaction.respond(choices);
-  }
-
   if ((sub === "add" || sub === "reassign") && focused.name === "campaign") {
     const rows = await pool.query(
       `SELECT name, label FROM campaigns WHERE guild_id=$1 AND active=TRUE ORDER BY created_at DESC LIMIT 25`,
@@ -900,9 +812,9 @@ client.on("interactionCreate", async (interaction) => {
 
   if (sub === "campaign" && focused.name === "name") {
     const action = interaction.options.getString("action");
-    // Start = new campaign, don't suggest existing ones
-    if (action === "start") return interaction.respond([]);
-    // End = only active campaigns
+    // For "end" and "leaderboard" — only show active campaigns
+    // For "start" — show nothing (it's a new name, free text would be better but autocomplete can show existing for reference)
+    // For all — show relevant ones
     const activeOnly = action === "end";
     const rows = await pool.query(
       activeOnly
@@ -966,41 +878,27 @@ client.on("interactionCreate", async (interaction) => {
 
       const PAGE_SIZE = 10;
       const totalPages = Math.ceil(rows.length / PAGE_SIZE);
+      const pages = [];
 
-      const buildPage = async (pageIndex) => {
-        const pageRows = rows.slice(pageIndex * PAGE_SIZE, (pageIndex + 1) * PAGE_SIZE);
-        let content = `## <a:purplesparkle:1510784631945953422> All Members Stamps <a:purplesparkle:1510784631945953422>\n*Page ${pageIndex + 1}/${totalPages}*\n\n`;
+      for (let i = 0; i < rows.length; i += PAGE_SIZE) {
+        const pageRows = rows.slice(i, i + PAGE_SIZE);
+        const pageNum = Math.floor(i / PAGE_SIZE) + 1;
+        let content = `# <a:purplesparkle:1510784631945953422> All Members — Stamp Count <a:purplesparkle:1510784631945953422>\n*Page ${pageNum}/${totalPages}*\n\n`;
         for (const row of pageRows) {
           const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
           const name = member ? member.user.username : `Unknown (${row.user_id})`;
           const stamps = Math.min(Number(row.current_stamps), STAMP_GOAL);
-          const completedLine = Number(row.cards_completed) > 0 ? `\n<a:completed:1510786649439731803> ${row.cards_completed} Completed` : "";
-          const unclaimedLine = Number(row.unclaimed) > 0 ? `\n<a:Loading:1510810314709401751> ${row.unclaimed} Unclaimed` : "";
+          const completedLine = Number(row.cards_completed) > 0 ? `\n<a:trophies:1510784061638053969> ${row.cards_completed} Completed` : "";
+          const unclaimedLine = Number(row.unclaimed) > 0 ? `\n<a:4_:1510785504109531176> ${row.unclaimed} unclaimed` : "";
           content += `### ${name} — ${stamps}/${STAMP_GOAL}${completedLine}${unclaimedLine}\n`;
         }
-        return content;
-      };
+        pages.push(content);
+      }
 
-      const buildButtons = (pageIndex) => {
-        if (totalPages <= 1) return [];
-        return [new ActionRowBuilder().addComponents(
-          new ButtonBuilder().setCustomId("ml_prev").setLabel("◀ Previous").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex === 0),
-          new ButtonBuilder().setCustomId("ml_next").setLabel("Next ▶").setStyle(ButtonStyle.Secondary).setDisabled(pageIndex === totalPages - 1),
-        )];
-      };
-
-      let currentPage = 0;
-      const msg = await interaction.editReply({ content: await buildPage(0), components: buildButtons(0) });
-      if (totalPages <= 1) return;
-
-      const collector = msg.createMessageComponentCollector({ componentType: ComponentType.Button, time: 120_000 });
-      collector.on("collect", async (btn) => {
-        if (btn.user.id !== interaction.user.id) return btn.reply({ content: "❌ Only the person who ran this command can flip pages.", flags: 64 });
-        if (btn.customId === "ml_prev") currentPage = Math.max(0, currentPage - 1);
-        if (btn.customId === "ml_next") currentPage = Math.min(totalPages - 1, currentPage + 1);
-        await btn.update({ content: await buildPage(currentPage), components: buildButtons(currentPage) });
-      });
-      collector.on("end", () => msg.edit({ components: [] }).catch(() => {}));
+      await interaction.editReply({ content: pages[0] });
+      for (let i = 1; i < pages.length; i++) {
+        await interaction.followUp({ content: pages[i] });
+      }
       return;
     }
 
@@ -1069,30 +967,18 @@ client.on("interactionCreate", async (interaction) => {
     if (sub === "leaderboard") {
       const rows = await getLeaderboard(guildId);
       if (!rows.length) return interaction.reply({ content: "<:wrong:1510784077794377838> No stamps have been issued yet.", flags: 64 });
-
+      let rank = 1;
       const lines = [];
       for (const row of rows) {
         const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
         if (!member) continue;
         const stamps = Math.min(Number(row.current_stamps), STAMP_GOAL);
-        lines.push(`### ${member.user.username} — ${stamps}/${STAMP_GOAL}`);
-
-        // Get completed cards grouped by campaign
-        const campRes = await pool.query(
-          `SELECT c.label, COUNT(*) as total
-           FROM completed_cards cc
-           LEFT JOIN campaigns c ON cc.campaign_id = c.id
-           WHERE cc.guild_id=$1 AND cc.user_id=$2
-           GROUP BY c.label ORDER BY total DESC`,
-          [guildId, row.user_id]
-        );
-        for (const cr of campRes.rows) {
-          lines.push(`<a:completed:1510786649439731803> ${cr.total} completed — ${cr.label || "No Campaign"}`);
-        }
+        const completedText = row.cards_completed > 0 ? `\n<a:trophies:1510784061638053969> ${row.cards_completed} total cards completed` : "";
+        lines.push(`### ${rank}. ${member.user.username} — ${stamps}/${STAMP_GOAL}${completedText}`);
+        rank++;
       }
-
       return interaction.reply({
-        content: `## <a:purplesparkle:1510784631945953422> Stamp Leaderboard <a:purplesparkle:1510784631945953422>\n<:member:1510784070957797396> **Top 10 Members:**\n\n` + lines.join("\n"),
+        content: `# <:CROWN1:1510784629794275428> Stamp Leaderboard <:CROWN1:1510784629794275428>\n## <:member:1510784070957797396> Top 10 members:\n` + lines.join("\n"),
         allowedMentions: { users: [] },
       });
     }
@@ -1107,27 +993,28 @@ client.on("interactionCreate", async (interaction) => {
       const currentCount = currentCardId ? await getCount(guildId, user.id, currentCardId) : 0;
 
       const lines = [
-        `## <a:purplesparkle:1510784631945953422> Stamp History ${user} <a:purplesparkle:1510784631945953422>`,
-        `<a:SS_PurpleCandles:1510784631136587868> Total Cards Completed: **${total}**`,
+        `## <a:412536pastelpurplesparklies:1489110919354253363> Stamp History for ${user}`,
+        `<:cards:1489111688849657917> Total cards completed: **${total}**`,
         ``,
       ];
 
       for (const r of rows) {
-        const isClaimed = (r.claimed === true || r.claimed === 't' || r.claimed === 'true');
-        const claimStatus = isClaimed ? `<:checkmark:1510784068487479318> Claimed` : `<:wrong:1510784077794377838> Unclaimed`;
+        const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
         const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
-        let campaignName = "No Campaign";
+        const isClaimed = (r.claimed === true || r.claimed === 't' || r.claimed === 'true');
+        const claimStatus = isClaimed ? `<:checkmark:1510784068487479318> Claimed` : `<a:RojasClock:1510787896574083182> Unclaimed`;
+        let campaignTag = "";
         if (r.campaign_id) {
           const campRes = await pool.query("SELECT label FROM campaigns WHERE id=$1", [r.campaign_id]);
-          if (campRes.rows[0]) campaignName = campRes.rows[0].label;
+          if (campRes.rows[0]) campaignTag = ` — 🏷️ ${campRes.rows[0].label}`;
         }
-        lines.push(`<:Board_Princess_Stamp:1510805274779320410> Card #${r.card_number} — ${campaignName} — Completed — ${date} — ${claimStatus}`);
+        lines.push(`<:medaltop:1489043799307980893> **Card #${r.card_number}** — ${cardName} — ✅ Completed — ${date} — ${claimStatus}${campaignTag}`);
       }
 
       // Current in-progress card
       if (currentCardId && STAMP_CARDS[currentCardId] && currentCount < STAMP_GOAL) {
-        const lastStamped = `<t:${Math.floor(Date.now() / 1000)}:D>`;
-        lines.push(`#${total + 1} — In Progress — <a:Loading:1510810314709401751> — ${lastStamped} — ${currentCount}/${STAMP_GOAL}`);
+        const today = `<t:${Math.floor(Date.now() / 1000)}:D>`;
+        lines.push(`<:hourglass:1489113198509424901> **Card #${total + 1}** — ${STAMP_CARDS[currentCardId].name} — 🔄 In Progress — ${today} — ${currentCount}/${STAMP_GOAL}`);
       }
 
       if (lines.length <= 3) lines.push(`📭 No stamp history yet.`);
@@ -1202,51 +1089,16 @@ client.on("interactionCreate", async (interaction) => {
     if (sub === "setcard") {
       const cardId = interaction.options.getString("card", true);
       const targetUser = interaction.options.getUser("user");
-      const campaignName = interaction.options.getString("campaign");
-      const stampChoice = interaction.options.getString("stamp");
-
-      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "<:wrong:1510784077794377838> Unknown card choice. Please pick from the list.", flags: 64 });
+      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Unknown card choice. Please pick from the list.", flags: 64 });
 
       const userId = (targetUser && targetUser.id !== interaction.user.id) ? targetUser.id : interaction.user.id;
       const isOther = targetUser && targetUser.id !== interaction.user.id;
-      const isOwner = interaction.guild.ownerId === interaction.user.id;
-      const isAdmin = interaction.memberPermissions?.has(PermissionFlagsBits.Administrator);
-      const isManager = await canManage(interaction);
 
-      // Only admins/owners/managers can set for others
-      if (isOther && !isManager) {
-        return interaction.reply({ content: "<:wrong:1510784077794377838> You don't have permission to set another member's card.", flags: 64 });
+      if (isOther && !(await canManage(interaction))) {
+        return interaction.reply({ content: "❌ You don't have permission to set another member's card.", flags: 64 });
       }
 
-      // Everyone must select a campaign
-      if (!campaignName) {
-        return interaction.reply({ content: "<:wrong:1510784077794377838> Please select a campaign from the dropdown.", flags: 64 });
-      }
-
-      await interaction.deferReply({ flags: 64 });
-
-      // Per-campaign card
-      if (campaignName) {
-        const camp = await pool.query(
-          `SELECT * FROM campaigns WHERE guild_id=$1 AND name=$2`,
-          [guildId, campaignName]
-        );
-        const c = camp.rows[0];
-        if (!c) return interaction.editReply(`<:wrong:1510784077794377838> Campaign \`${campaignName}\` not found.`);
-
-        const stampId = stampChoice || (await getCampaignCard(guildId, userId, c.id))?.stamp_id || "gold_stamp";
-        await setCampaignCard(guildId, userId, c.id, cardId, stampId);
-
-        // Count is per campaign_id not card_id
-        const count = await getCount(guildId, userId, c.id, c.id);
-        const previewBuffer = await renderStampCard(cardId, Math.max(count, 1), stampId);
-        return interaction.editReply({
-          content: `<:checkmark:1510784068487479318> ${isOther ? `**${targetUser.username}'s**` : "Your"} card for **${c.label}** is now **${STAMP_CARDS[cardId].name}**!`,
-          files: [{ attachment: previewBuffer, name: "card-preview.png" }],
-        });
-      }
-
-      // Default card — managers/admins/owners only
+      // Transfer stamps from old card to new card
       const oldSaved = await getCard(guildId, userId);
       const oldCardId = oldSaved?.card_id || oldSaved;
       let transferredCount = 0;
@@ -1257,17 +1109,26 @@ client.on("interactionCreate", async (interaction) => {
           await upsertCount(guildId, userId, cardId, transferredCount);
         }
       }
+
       await setCard(guildId, userId, cardId);
-      const transferNote = transferredCount > 0 ? ` **${transferredCount}** stamp(s) transferred!` : "";
+
+      const transferNote = transferredCount > 0 ? ` **${transferredCount}** stamp(s) have been transferred to the new card!` : "";
+
+      // Render preview with 1 stamp
+      await interaction.deferReply({ flags: 64 });
       const savedStampInfo = await getCard(guildId, userId);
-      const previewStampId = stampChoice || savedStampInfo?.stamp_id || "gold_stamp";
-      if (stampChoice) await pool.query(
-        `UPDATE user_cards SET stamp_id=$1 WHERE guild_id=$2 AND user_id=$3`,
-        [stampChoice, guildId, userId]
-      );
+      const previewStampId = savedStampInfo?.stamp_id || "gold_stamp";
       const previewBuffer = await renderStampCard(cardId, 1, previewStampId);
+
+      if (isOther) {
+        return interaction.editReply({
+          content: `✅ **${targetUser.username}'s** stamp card has been set to **${STAMP_CARDS[cardId].name}**.${transferNote}`,
+          files: [{ attachment: previewBuffer, name: "card-preview.png" }],
+        });
+      }
       return interaction.editReply({
-        content: `<:checkmark:1510784068487479318> ${isOther ? `**${targetUser.username}'s**` : "Your"} default stamp card is now **${STAMP_CARDS[cardId].name}**!${transferNote}`,
+        content: `✅ Your stamp card is now **${STAMP_CARDS[cardId].name}**!${transferNote}
+*Here's a preview of your new card:*`,
         files: [{ attachment: previewBuffer, name: "card-preview.png" }],
       });
     }
@@ -1276,38 +1137,15 @@ client.on("interactionCreate", async (interaction) => {
     if (sub === "view") {
       const user = interaction.options.getUser("user") || interaction.user;
       const saved = await getCard(guildId, user.id);
-      const defaultCardId = saved?.card_id || "og";
-      const defaultStampId = saved?.stamp_id || "black_stamp";
-
-      // Get per-campaign counts
-      const campaignCounts = await getCampaignStampsForUser(guildId, user.id);
-
-      if (campaignCounts.length === 0) {
-        // No campaign data — show default card
-        if (!STAMP_CARDS[defaultCardId]) return interaction.reply({ content: "❌ Your saved card is invalid. Run `/stamp setcard` again.", flags: 64 });
-        const count = Math.min(await getCount(guildId, user.id, defaultCardId), STAMP_GOAL);
-        const buffer = await renderStampCard(defaultCardId, count, defaultStampId);
-        return interaction.reply({
-          content: `👑 **${user.username}** — **${STAMP_CARDS[defaultCardId].name}** — **${count}/${STAMP_GOAL}**`,
-          files: [{ attachment: buffer, name: "stamp-card.png" }],
-        });
-      }
-
-      // Show each campaign card
-      await interaction.deferReply();
-      for (const camp of campaignCounts) {
-        const campCard = await getCampaignCard(guildId, user.id, camp.id);
-        const cardId = campCard?.card_id || defaultCardId;
-        const stampId = campCard?.stamp_id || defaultStampId;
-        if (!STAMP_CARDS[cardId]) continue;
-        const count = Math.min(Number(camp.total), STAMP_GOAL);
-        const buffer = await renderStampCard(cardId, count, stampId);
-        await interaction.followUp({
-          content: `👑 **${user.username}** — **${camp.label}** — **${STAMP_CARDS[cardId].name}** — **${count}/${STAMP_GOAL}**`,
-          files: [{ attachment: buffer, name: `${camp.label.replace(/\s+/g,'_')}.png` }],
-        });
-      }
-      return;
+      const cardId = saved?.card_id || saved || "og";
+      const stampId = saved?.stamp_id || "black_stamp";
+      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ Your saved card is invalid. Run `/stamp setcard` again.", flags: 64 });
+      const count = Math.min(await getCount(guildId, user.id, cardId), STAMP_GOAL);
+      const buffer = await renderStampCard(cardId, count, stampId);
+      return interaction.reply({
+        content: `👑 ${user.username} — **${STAMP_CARDS[cardId].name}** — **${count}/${STAMP_GOAL}**`,
+        files: [{ attachment: buffer, name: "stamp-card.png" }],
+      });
     }
 
     // ===== RESETALL =====
@@ -1410,11 +1248,11 @@ client.on("interactionCreate", async (interaction) => {
 
       const targetUser = interaction.options.getUser("user", true);
       const targetMember = await interaction.guild.members.fetch(targetUser.id).catch(() => null);
-      if (!targetMember) return interaction.editReply({ content: "❌ I can't find that member in this server." });
+      if (!targetMember) return interaction.reply({ content: "❌ I can't find that member in this server.", flags: 64 });
 
       const savedCard = await getCard(guildId, targetUser.id);
       const cardId = savedCard?.card_id || savedCard || "og";
-      if (!STAMP_CARDS[cardId]) return interaction.editReply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`." });
+      if (!STAMP_CARDS[cardId]) return interaction.reply({ content: "❌ That user has an invalid saved card. Ask them to run `/stamp setcard`.", flags: 64 });
 
       // RESET
       if (sub === "reset") {
@@ -1435,7 +1273,9 @@ client.on("interactionCreate", async (interaction) => {
       }
 
       // ADD / REMOVE
+      const current = await getCount(guildId, targetUser.id, cardId);
       const amount = interaction.options.getInteger("amount") || 1;
+      const next = sub === "add" ? current + amount : Math.max(0, current - amount);
       const overrideStamp = interaction.options.getString("design");
       const stampId = overrideStamp || await getStaffStamp(guildId, interaction.user.id);
       const rewardRoleId = await resolveRewardRole(guildId);
@@ -1453,10 +1293,7 @@ client.on("interactionCreate", async (interaction) => {
         campaignLabel = camp.label;
       }
 
-      const current = await getCount(guildId, targetUser.id, cardId, campaignId);
-      const next = sub === "add" ? current + amount : Math.max(0, current - amount);
-
-      await upsertCount(guildId, targetUser.id, cardId, next, campaignId);
+      await upsertCount(guildId, targetUser.id, cardId, next);
       await setStamp(guildId, targetUser.id, stampId);
 
       // Completion with overflow
@@ -1465,11 +1302,11 @@ client.on("interactionCreate", async (interaction) => {
         const cardNumber = (await maxCardNumber(guildId, targetUser.id)) + 1;
         await insertCompleted(guildId, targetUser.id, cardId, cardNumber, campaignId);
         await postCompletedWithImage({ interaction, targetUser, cardId, stampId, count: STAMP_GOAL, cardNumber, campaignLabel });
-        await deleteCount(guildId, targetUser.id, cardId, campaignId);
+        await deleteCount(guildId, targetUser.id, cardId);
         if (rewardRoleId && !targetMember.roles.cache.has(rewardRoleId)) await targetMember.roles.add(rewardRoleId).catch(() => {});
         await logStampWithImage({ interaction, targetUser, cardId, stampId, action: `🏅 Card #${cardNumber} COMPLETED`, count: STAMP_GOAL, campaignLabel });
 
-        if (overflow > 0) await upsertCount(guildId, targetUser.id, cardId, overflow, campaignId);
+        if (overflow > 0) await upsertCount(guildId, targetUser.id, cardId, overflow);
 
         const overflowNote = overflow > 0 ? ` **${overflow}** stamp(s) carried over!` : ` They can start collecting again!`;
         return interaction.editReply(
