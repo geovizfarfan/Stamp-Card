@@ -574,7 +574,7 @@ const commands = [
             )
         )
         .addStringOption((o) =>
-          o.setName("name").setDescription("Campaign ID / short name (e.g. summer2025 — no spaces)")
+          o.setName("name").setDescription("Campaign name").setAutocomplete(true)
         )
         .addStringOption((o) =>
           o.setName("label").setDescription("Display name (e.g. Summer 2025 Event)")
@@ -588,13 +588,14 @@ const commands = [
         )
         .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setMinValue(1))
         .addStringOption((o) =>
-          o.setName("campaign").setDescription("Tag this stamp to a campaign (optional, use campaign name/ID)")
+          o.setName("campaign").setDescription("Tag this stamp to an active campaign (optional)").setAutocomplete(true)
         )
     )
     .addSubcommand((s) =>
       s.setName("remove").setDescription("Remove stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
-        .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setMinValue(1))
+        .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setRequired(true).setMinValue(1))
+        .addStringOption((o) => o.setName("reason").setDescription("Reason for removing stamps").setRequired(true))
     )
     .addSubcommand((s) =>
       s.setName("reset").setDescription("Reset a user's stamps (managers only)")
@@ -776,13 +777,36 @@ client.on("interactionCreate", async (interaction) => {
   if (!interaction.isAutocomplete()) return;
   if (interaction.commandName !== "stamp") return;
   const sub = interaction.options.getSubcommand();
-  if (sub === "setcard" || sub === "reset") {
-    const focused = interaction.options.getFocused().toLowerCase();
+  const focused = interaction.options.getFocused(true);
+
+  if ((sub === "setcard" || sub === "reset") && focused.name === "card") {
     const choices = Object.entries(STAMP_CARDS)
-      .filter(([, card]) => card.name.toLowerCase().includes(focused))
+      .filter(([, card]) => card.name.toLowerCase().includes(focused.value.toLowerCase()))
       .slice(0, 25)
       .map(([value, card]) => ({ name: card.name, value }));
-    await interaction.respond(choices);
+    return interaction.respond(choices);
+  }
+
+  if (sub === "add" && focused.name === "campaign") {
+    const rows = await pool.query(
+      `SELECT name, label FROM campaigns WHERE guild_id=$1 AND active=TRUE ORDER BY created_at DESC LIMIT 25`,
+      [interaction.guildId]
+    );
+    const choices = rows.rows
+      .filter(r => r.label.toLowerCase().includes(focused.value.toLowerCase()) || r.name.toLowerCase().includes(focused.value.toLowerCase()))
+      .map(r => ({ name: r.label, value: r.name }));
+    return interaction.respond(choices);
+  }
+
+  if (sub === "campaign" && focused.name === "name") {
+    const rows = await pool.query(
+      `SELECT name, label, active FROM campaigns WHERE guild_id=$1 ORDER BY active DESC, created_at DESC LIMIT 25`,
+      [interaction.guildId]
+    );
+    const choices = rows.rows
+      .filter(r => r.label.toLowerCase().includes(focused.value.toLowerCase()) || r.name.toLowerCase().includes(focused.value.toLowerCase()))
+      .map(r => ({ name: `${r.active ? "🟢" : "🔴"} ${r.label}`, value: r.name }));
+    return interaction.respond(choices);
   }
 });
 
@@ -799,39 +823,34 @@ client.on("interactionCreate", async (interaction) => {
 
     // ===== MEMBERLIST =====
     if (sub === "memberlist") {
-      if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to view member list.", flags: 64 });
+      if (!(await canManage(interaction))) return interaction.reply({ content: "<:wrong:1510784077794377838> You don't have permission to view member list.", flags: 64 });
       await interaction.deferReply();
 
       const rows = await getAllMembers(guildId);
-      if (!rows.length) return interaction.editReply({ content: "📊 No stamp data found for this server." });
+      if (!rows.length) return interaction.editReply({ content: "<:wrong:1510784077794377838> No stamp data found for this server." });
 
-      const lines = [];
-      let rank = 1;
-      for (const row of rows) {
-        const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
-        const name = member ? member.user.username : `Unknown (${row.user_id})`;
-        const stamps = Math.min(Number(row.current_stamps), STAMP_GOAL);
-        const unclaimedNote = row.unclaimed > 0 ? ` — ⏳ ${row.unclaimed} unclaimed` : "";
-        const completedNote = row.cards_completed > 0 ? ` — 🏅 ${row.cards_completed} completed` : "";
-        lines.push(`**${rank}.** ${name} — **${stamps}/${STAMP_GOAL} stamps**${completedNote}${unclaimedNote}`);
-        rank++;
-      }
+      const PAGE_SIZE = 10;
+      const totalPages = Math.ceil(rows.length / PAGE_SIZE);
+      const pages = [];
 
-      // Discord has a 2000 char limit — split into chunks if needed
-      const chunks = [];
-      let current = `## 📋 All Members — Stamp Counts\n\n`;
-      for (const line of lines) {
-        if ((current + line + "\n").length > 1900) {
-          chunks.push(current);
-          current = "";
+      for (let i = 0; i < rows.length; i += PAGE_SIZE) {
+        const pageRows = rows.slice(i, i + PAGE_SIZE);
+        const pageNum = Math.floor(i / PAGE_SIZE) + 1;
+        let content = `# <a:purplesparkle:1510784631945953422> All Members — Stamp Count <a:purplesparkle:1510784631945953422>\n*Page ${pageNum}/${totalPages}*\n\n`;
+        for (const row of pageRows) {
+          const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
+          const name = member ? member.user.username : `Unknown (${row.user_id})`;
+          const stamps = Math.min(Number(row.current_stamps), STAMP_GOAL);
+          const completedLine = Number(row.cards_completed) > 0 ? `\n<a:trophies:1510784061638053969> ${row.cards_completed} Completed` : "";
+          const unclaimedLine = Number(row.unclaimed) > 0 ? `\n<a:4_:1510785504109531176> ${row.unclaimed} unclaimed` : "";
+          content += `### ${name} — ${stamps}/${STAMP_GOAL}${completedLine}${unclaimedLine}\n`;
         }
-        current += line + "\n";
+        pages.push(content);
       }
-      if (current) chunks.push(current);
 
-      await interaction.editReply({ content: chunks[0] });
-      for (let i = 1; i < chunks.length; i++) {
-        await interaction.followUp({ content: chunks[i], flags: 64 });
+      await interaction.editReply({ content: pages[0] });
+      for (let i = 1; i < pages.length; i++) {
+        await interaction.followUp({ content: pages[i] });
       }
       return;
     }
@@ -862,7 +881,7 @@ client.on("interactionCreate", async (interaction) => {
       ];
 
       if (unclaimed.length > 0) {
-        lines.push(``, `**⏳ Unclaimed Cards:**`);
+        lines.push(``, `**<a:RojasClock:1510787896574083182> Unclaimed Cards:**`);
         for (const r of unclaimed) {
           const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
           const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
@@ -900,18 +919,19 @@ client.on("interactionCreate", async (interaction) => {
     // ===== LEADERBOARD =====
     if (sub === "leaderboard") {
       const rows = await getLeaderboard(guildId);
-      if (!rows.length) return interaction.reply({ content: "📊 No stamps have been issued yet.", flags: 64 });
+      if (!rows.length) return interaction.reply({ content: "<:wrong:1510784077794377838> No stamps have been issued yet.", flags: 64 });
       let rank = 1;
       const lines = [];
       for (const row of rows) {
         const member = await interaction.guild.members.fetch(row.user_id).catch(() => null);
         if (!member) continue;
-        const completedText = row.cards_completed > 0 ? `\n<:70038namedaltop:1489043799307980893> **${row.cards_completed}** card(s) completed` : "";
-        lines.push(`**${rank}.** ${member.user.username} — **${row.current_stamps}/${STAMP_GOAL}**${completedText}`);
+        const stamps = Math.min(Number(row.current_stamps), STAMP_GOAL);
+        const completedText = row.cards_completed > 0 ? `\n<a:trophies:1510784061638053969> ${row.cards_completed} total cards completed` : "";
+        lines.push(`### ${rank}. ${member.user.username} — ${stamps}/${STAMP_GOAL}${completedText}`);
         rank++;
       }
       return interaction.reply({
-        content: `## <a:962876purplehangingstars:1488748253489926287> STAMP LEADER BOARD <a:962876purplehangingstars:1488748253489926287>\n\n` + lines.join("\n\n"),
+        content: `# <:CROWN1:1510784629794275428> Stamp Leaderboard <:CROWN1:1510784629794275428>\n## <:member:1510784070957797396> Top 10 members:\n` + lines.join("\n"),
         allowedMentions: { users: [] },
       });
     }
@@ -935,7 +955,7 @@ client.on("interactionCreate", async (interaction) => {
         const cardName = STAMP_CARDS[r.card_id]?.name || r.card_id;
         const date = `<t:${Math.floor(r.completed_at / 1000)}:D>`;
         const isClaimed = (r.claimed === true || r.claimed === 't' || r.claimed === 'true');
-        const claimStatus = isClaimed ? `✅ Claimed` : `⏳ Unclaimed`;
+        const claimStatus = isClaimed ? `<:checkmark:1510784068487479318> Claimed` : `<a:RojasClock:1510787896574083182> Unclaimed`;
         let campaignTag = "";
         if (r.campaign_id) {
           const campRes = await pool.query("SELECT label FROM campaigns WHERE id=$1", [r.campaign_id]);
@@ -997,7 +1017,7 @@ client.on("interactionCreate", async (interaction) => {
       const claimed = status === 'claimed';
       await setClaimedStatus(record.id, claimed);
 
-      const emoji = claimed ? '✅' : '⏳';
+      const emoji = claimed ? '<:checkmark:1510784068487479318>' : '<a:RojasClock:1510787896574083182>';
       return interaction.reply({
         content: `${emoji} **Card #${cardNumber}** for **${targetUser.username}** has been marked as **${claimed ? 'Claimed' : 'Unclaimed'}**.`,
         allowedMentions: { users: [] },
@@ -1128,7 +1148,7 @@ client.on("interactionCreate", async (interaction) => {
         const displayLabel = label || name;
         const id = await createCampaign(guildId, name, displayLabel);
         return interaction.reply({
-          content: `🚀 **Campaign started!**\n> **Name (ID):** \`${name}\`\n> **Label:** ${displayLabel}\n> **Campaign ID:** #${id}\n\nUse \`/stamp add @user campaign:${name}\` to tag stamps to this campaign.`,
+          content: `<a:checkmarkgood:1510786567482904707> **Campaign started!**\n> **Name (ID):** \`${name}\`\n> **Label:** ${displayLabel}\n> **Campaign ID:** #${id}\n\nUse \`/stamp add @user campaign:${name}\` to tag stamps to this campaign.`,
           allowedMentions: { users: [] },
         });
       }
@@ -1136,27 +1156,27 @@ client.on("interactionCreate", async (interaction) => {
       if (action === "end") {
         if (!name) return interaction.reply({ content: "❌ Provide the campaign `name` to end.", flags: 64 });
         await endCampaign(guildId, name);
-        return interaction.reply({ content: `🛑 Campaign **\`${name}\`** has been ended.` });
+        return interaction.reply({ content: `<:wrong:1510784077794377838> Campaign **\`${name}\`** has been ended.` });
       }
 
       if (action === "list") {
         const rows = await listCampaigns(guildId);
-        if (!rows.length) return interaction.reply({ content: "📋 No campaigns found for this server.", flags: 64 });
+        if (!rows.length) return interaction.reply({ content: "<a:list:1510793730070937620> No campaigns found for this server.", flags: 64 });
         const lines = rows.map(r => {
           const status = r.active ? "🟢 Active" : "🔴 Ended";
           const since = `<t:${Math.floor(r.created_at / 1000)}:D>`;
           return `${status} **${r.label}** (\`${r.name}\`) — started ${since}`;
         });
-        return interaction.reply({ content: `## 📋 Campaigns\n\n${lines.join("\n")}`, allowedMentions: { users: [] } });
+        return interaction.reply({ content: `<a:list:1510793730070937620> **Campaigns**\n\n${lines.join("\n")}`, allowedMentions: { users: [] } });
       }
 
       if (action === "leaderboard") {
-        if (!name) return interaction.reply({ content: "❌ Provide the campaign `name` to view its leaderboard.", flags: 64 });
+        if (!name) return interaction.reply({ content: "<:wrong:1510784077794377838> Provide the campaign `name` to view its leaderboard.", flags: 64 });
         const campaign = await pool.query("SELECT * FROM campaigns WHERE guild_id=$1 AND name=$2", [guildId, name]);
         const c = campaign.rows[0];
-        if (!c) return interaction.reply({ content: `❌ Campaign \`${name}\` not found.`, flags: 64 });
+        if (!c) return interaction.reply({ content: `<:wrong:1510784077794377838> Campaign \`${name}\` not found.`, flags: 64 });
         const rows = await getCampaignLeaderboard(guildId, c.id);
-        if (!rows.length) return interaction.reply({ content: `📊 No completed cards yet for **${c.label}**.`, flags: 64 });
+        if (!rows.length) return interaction.reply({ content: `<a:trophies:1510784061638053969> No completed cards yet for **${c.label}**.`, flags: 64 });
         const lines = [];
         let rank = 1;
         for (const row of rows) {
@@ -1166,7 +1186,7 @@ client.on("interactionCreate", async (interaction) => {
           rank++;
         }
         return interaction.reply({
-          content: `## 🏆 ${c.label} — Campaign Leaderboard\n\n${lines.join("\n")}`,
+          content: `<a:trophies:1510784061638053969> **${c.label} — Campaign Leaderboard**\n\n${lines.join("\n")}`,
           allowedMentions: { users: [] },
         });
       }
@@ -1258,7 +1278,12 @@ client.on("interactionCreate", async (interaction) => {
         action: sub === "add" ? `➕ Added ${amount} (${current} → ${next})` : `➖ Removed ${amount} (${current} → ${next})`,
         count: next,
       });
-      return interaction.editReply(`✅ ${targetUser.username} now has **${next}/${STAMP_GOAL}** on **${STAMP_CARDS[cardId].name}**.`);
+      if (sub === "add") {
+        return interaction.editReply(`<:checkmark:1510784068487479318> **${targetUser.username}** now has **${next}/${STAMP_GOAL}** <a:confettipenguin:1489113733845356704>`);
+      } else {
+        const reason = interaction.options.getString("reason", true);
+        return interaction.editReply(`<:checkmark:1510784068487479318> **${targetUser.username}** now has **${next}/${STAMP_GOAL}**\n<:receipts:1488760952924143616> Reason: ${reason}`);
+      }
     }
 
     return interaction.reply({ content: "❌ Unknown subcommand.", flags: 64 });
