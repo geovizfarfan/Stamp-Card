@@ -812,9 +812,9 @@ client.on("interactionCreate", async (interaction) => {
 
   if (sub === "campaign" && focused.name === "name") {
     const action = interaction.options.getString("action");
-    // For "end" and "leaderboard" — only show active campaigns
-    // For "start" — show nothing (it's a new name, free text would be better but autocomplete can show existing for reference)
-    // For all — show relevant ones
+    // Start = new campaign, don't suggest existing ones
+    if (action === "start") return interaction.respond([]);
+    // End = only active campaigns
     const activeOnly = action === "end";
     const rows = await pool.query(
       activeOnly
