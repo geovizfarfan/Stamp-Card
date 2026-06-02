@@ -84,7 +84,20 @@ const STAMPS = {
   purple_stamp:     { name: "Purple",                   file: "Purple_Stamp.png" },
   silver_stamp:     { name: "Silver",                   file: "Silver_Stamp.png" },
   verified_gold:    { name: "Verified Gold",            file: "Verified_Gold.png" },
-  verified_black:   { name: "Verified Black",           file: "Verified_Black.png" },
+  verified_black:   { name: "Verified Black",           file: "Verified_Black_Stamp.png" },
+  daisy_stamp:      { name: "Daisy",                    file: "daisy_stamp.png" },
+  fall_stamp:       { name: "Fall",                     file: "fall_stamp.png" },
+  flower_stamp:     { name: "Flower",                   file: "flower_stamp.png" },
+  fuscia_stamp:     { name: "Fuscia",                   file: "fuscia_stamp.png" },
+  les_stamp:        { name: "Lesbian",                  file: "les_stamp.png" },
+  meow_stamp:       { name: "Meow",                     file: "meow_stamp.png" },
+  pride_stamp:      { name: "Pride",                    file: "pride_stamp.png" },
+  pup_stamp:        { name: "Pup",                      file: "pup_stamp.png" },
+  trans_stamp:      { name: "Trans",                    file: "trans_stamp.png" },
+  kirby_stamp:      { name: "Kirby",                    file: "Kirby.png" },
+  kirby_star:       { name: "Kirby Star",               file: "Kirby_star.png" },
+  kirby_fuscia:     { name: "Kirby Fuscia",             file: "fucsia_kirby.png" },
+  kirby_sleepy:     { name: "Kirby Sleepy",             file: "sleepy_kirby.png" },
 };
 
 const STAMP_CHOICES = Object.entries(STAMPS).map(([value, s]) => ({ name: s.name, value }));
@@ -1269,38 +1282,35 @@ client.on("interactionCreate", async (interaction) => {
     // ===== VIEW =====
     if (sub === "view") {
       const user = interaction.options.getUser("user") || interaction.user;
-      const saved = await getCard(guildId, user.id);
-      const defaultCardId = saved?.card_id || "og";
-      const defaultStampId = saved?.stamp_id || "black_stamp";
 
       // Get per-campaign counts
       const campaignCounts = await getCampaignStampsForUser(guildId, user.id);
 
       if (campaignCounts.length === 0) {
-        // No campaign data — show default card
-        if (!STAMP_CARDS[defaultCardId]) return interaction.reply({ content: "❌ Your saved card is invalid. Run `/stamp setcard` again.", flags: 64 });
-        const count = Math.min(await getCount(guildId, user.id, defaultCardId), STAMP_GOAL);
-        const buffer = await renderStampCard(defaultCardId, count, defaultStampId);
         return interaction.reply({
-          content: `👑 **${user.username}** — **${STAMP_CARDS[defaultCardId].name}** — **${count}/${STAMP_GOAL}**`,
-          files: [{ attachment: buffer, name: "stamp-card.png" }],
+          content: `👑 **${user.username}** has no stamps yet. They need to run \`/stamp setcard\` to pick a card design for a campaign first!`,
+          flags: 64,
         });
       }
 
       // Show each campaign card
       await interaction.deferReply();
+      let first = true;
       for (const camp of campaignCounts) {
         const campCard = await getCampaignCard(guildId, user.id, camp.id);
-        const cardId = campCard?.card_id || defaultCardId;
-        const stampId = campCard?.stamp_id || defaultStampId;
-        if (!STAMP_CARDS[cardId]) continue;
+        if (!campCard || !STAMP_CARDS[campCard.card_id]) continue;
+        const cardId = campCard.card_id;
+        const stampId = campCard.stamp_id || "gold_stamp";
         const count = Math.min(Number(camp.total), STAMP_GOAL);
         const buffer = await renderStampCard(cardId, count, stampId);
-        await interaction.followUp({
+        const payload = {
           content: `👑 **${user.username}** — **${camp.label}** — **${STAMP_CARDS[cardId].name}** — **${count}/${STAMP_GOAL}**`,
           files: [{ attachment: buffer, name: `${camp.label.replace(/\s+/g,'_')}.png` }],
-        });
+        };
+        if (first) { await interaction.editReply(payload); first = false; }
+        else { await interaction.followUp(payload); }
       }
+      if (first) await interaction.editReply({ content: `👑 **${user.username}** has no stamp cards set up yet.` });
       return;
     }
 
