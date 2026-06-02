@@ -80,21 +80,21 @@ const STAMPS = {
   black_stamp:      { name: "Black",                    file: "Black_Stamp.png" },
   board_princess:   { name: "Board Princess",           file: "Board_Princess_Stamp.png" },
   gold_stamp:       { name: "Gold",                     file: "Gold_Stamp.png" },
-  pink_stamp:       { name: "Pink",                     file: "Pink_Stamp.png" },
-  purple_stamp:     { name: "Purple",                   file: "Purple_Stamp.png" },
-  silver_stamp:     { name: "Silver",                   file: "Silver_Stamp.png" },
+  pink_stamp:       { name: "Pink Crown",               file: "Pink_Stamp.png" },
+  purple_stamp:     { name: "Purple Crown",             file: "Purple_Stamp.png" },
+  silver_stamp:     { name: "Silver Crown",             file: "Silver_Stamp.png" },
   verified_gold:    { name: "Verified Gold",            file: "Verified_Gold.png" },
   verified_black:   { name: "Verified Black",           file: "Verified_Black_Stamp.png" },
   daisy_stamp:      { name: "Daisy",                    file: "daisy_stamp.png" },
-  fall_stamp:       { name: "Fall",                     file: "fall_stamp.png" },
-  flower_stamp:     { name: "Flower",                   file: "flower_stamp.png" },
+  fall_stamp:       { name: "Fall Pumpkin",             file: "fall_stamp.png" },
+  flower_stamp:     { name: "Flower Crown",             file: "flower_stamp.png" },
   fuscia_stamp:     { name: "Fuscia",                   file: "fuscia_stamp.png" },
   les_stamp:        { name: "Lesbian",                  file: "les_stamp.png" },
   meow_stamp:       { name: "Meow",                     file: "meow_stamp.png" },
   pride_stamp:      { name: "Pride",                    file: "pride_stamp.png" },
   pup_stamp:        { name: "Pup",                      file: "pup_stamp.png" },
   trans_stamp:      { name: "Trans",                    file: "trans_stamp.png" },
-  kirby_stamp:      { name: "Kirby",                    file: "Kirby_stamp.png" },
+  kirby_stamp:      { name: "Kirby Heart",              file: "Kirby_stamp.png" },
   kirby_star:       { name: "Kirby Star",               file: "Kirby_star.png" },
   kirby_fuscia:     { name: "Kirby Fuscia",             file: "fucsia_kirby.png" },
   kirby_sleepy:     { name: "Kirby Sleepy",             file: "sleepy_kirby.png" },
@@ -347,28 +347,36 @@ async function initDB() {
 // DB HELPERS
 // =====================
 async function getCount(guildId, userId, cardId, campaignId = null) {
+  if (campaignId) {
+    // Get campaign-specific count only
+    const res = await pool.query(
+      `SELECT COALESCE(SUM(count),0) as count FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND campaign_id=$4`,
+      [guildId, userId, cardId, campaignId]
+    );
+    return parseInt(res.rows[0].count, 10);
+  }
+  // No campaign — get all stamps for this card
   const res = await pool.query(
-    `SELECT count FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND COALESCE(campaign_id,-1)=COALESCE($4,-1)`,
-    [guildId, userId, cardId, campaignId]
+    `SELECT COALESCE(SUM(count),0) as count FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3`,
+    [guildId, userId, cardId]
   );
-  return res.rows[0]?.count || 0;
+  return parseInt(res.rows[0].count, 10);
 }
 async function upsertCount(guildId, userId, cardId, count, campaignId = null) {
-  // Try update first, then insert if not exists
   const updated = await pool.query(
-    `UPDATE stamps SET count=$4, updated_at=$5 WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND COALESCE(campaign_id,-1)=COALESCE($6,-1)`,
+    `UPDATE stamps SET count=$4, updated_at=$5 WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND campaign_id IS NOT DISTINCT FROM $6`,
     [guildId, userId, cardId, count, Date.now(), campaignId]
   );
   if (updated.rowCount === 0) {
     await pool.query(
-      `INSERT INTO stamps (guild_id, user_id, card_id, count, updated_at, campaign_id) VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
+      `INSERT INTO stamps (guild_id, user_id, card_id, count, updated_at, campaign_id) VALUES ($1,$2,$3,$4,$5,$6)`,
       [guildId, userId, cardId, count, Date.now(), campaignId]
-    );
+    ).catch(() => {});
   }
 }
 async function deleteCount(guildId, userId, cardId, campaignId = null) {
   await pool.query(
-    `DELETE FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND COALESCE(campaign_id,-1)=COALESCE($4,-1)`,
+    `DELETE FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND campaign_id IS NOT DISTINCT FROM $4`,
     [guildId, userId, cardId, campaignId]
   );
 }
@@ -624,7 +632,10 @@ const commands = [
     )
     .addSubcommand((s) =>
       s.setName("view").setDescription("View stamp progress")
-        .addUserOption((o) => o.setName("user").setDescription("User (optional)"))
+        .addUserOption((o) => o.setName("user").setDescription("Member to view").setRequired(true))
+        .addStringOption((o) =>
+          o.setName("campaign").setDescription("Which campaign to view").setRequired(true).setAutocomplete(true)
+        )
     )
     .addSubcommand((s) =>
       s.setName("leaderboard").setDescription("View the top stamp holders")
@@ -639,10 +650,7 @@ const commands = [
           o.setName("card").setDescription("Search for a card design").setRequired(true).setAutocomplete(true)
         )
         .addStringOption((o) =>
-          o.setName("campaign").setDescription("Set card for a specific campaign (leave blank for default)").setAutocomplete(true)
-        )
-        .addStringOption((o) =>
-          o.setName("stamp").setDescription("Also set your stamp design for this campaign").addChoices(...STAMP_CHOICES)
+          o.setName("campaign").setDescription("Which campaign is this card for").setRequired(true).setAutocomplete(true)
         )
         .addUserOption((o) => o.setName("user").setDescription("Set card for this user (managers only)"))
     )
@@ -668,11 +676,11 @@ const commands = [
       s.setName("add").setDescription("Add stamps (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("User").setRequired(true))
         .addStringOption((o) =>
-          o.setName("campaign").setDescription("Tag this stamp to an active campaign").setRequired(true).setAutocomplete(true)
+          o.setName("campaign").setDescription("Campaign to add stamps to").setRequired(true).setAutocomplete(true)
         )
-        .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setMinValue(1))
+        .addIntegerOption((o) => o.setName("amount").setDescription("Amount").setRequired(true).setMinValue(1))
         .addStringOption((o) =>
-          o.setName("design").setDescription("Override your saved stamp for this action (optional)").addChoices(...STAMP_CHOICES)
+          o.setName("stamp_design").setDescription("Stamp design (required for 1st stamp, optional after — saves as default)").addChoices(...STAMP_CHOICES)
         )
     )
     .addSubcommand((s) =>
@@ -890,7 +898,7 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.respond(choices);
   }
 
-  if ((sub === "add" || sub === "remove" || sub === "reassign") && focused.name === "campaign") {
+  if ((sub === "add" || sub === "remove" || sub === "reassign" || sub === "view") && focused.name === "campaign") {
     const rows = await pool.query(
       `SELECT name, label FROM campaigns WHERE guild_id=$1 AND active=TRUE ORDER BY created_at DESC LIMIT 25`,
       [interaction.guildId]
@@ -1241,7 +1249,7 @@ client.on("interactionCreate", async (interaction) => {
         const c = camp.rows[0];
         if (!c) return interaction.editReply(`<:wrong:1510784077794377838> Campaign \`${campaignName}\` not found.`);
 
-        const stampId = stampChoice || (await getCampaignCard(guildId, userId, c.id))?.stamp_id || "gold_stamp";
+        const stampId = (await getCampaignCard(guildId, userId, c.id))?.stamp_id || "gold_stamp";
         await setCampaignCard(guildId, userId, c.id, cardId, stampId);
 
         // Count is per campaign_id not card_id
@@ -1281,37 +1289,34 @@ client.on("interactionCreate", async (interaction) => {
 
     // ===== VIEW =====
     if (sub === "view") {
-      const user = interaction.options.getUser("user") || interaction.user;
+      const user = interaction.options.getUser("user", true);
+      const campaignName = interaction.options.getString("campaign", true);
 
-      // Get per-campaign counts
-      const campaignCounts = await getCampaignStampsForUser(guildId, user.id);
+      // Resolve campaign
+      const campRes = await pool.query(
+        `SELECT * FROM campaigns WHERE guild_id=$1 AND name=$2`,
+        [guildId, campaignName]
+      );
+      const camp = campRes.rows[0];
+      if (!camp) return interaction.reply({ content: `<:wrong:1510784077794377838> Campaign not found.`, flags: 64 });
 
-      if (campaignCounts.length === 0) {
+      const campCard = await getCampaignCard(guildId, user.id, camp.id);
+      if (!campCard || !STAMP_CARDS[campCard.card_id]) {
         return interaction.reply({
-          content: `👑 **${user.username}** has no stamps yet. They need to run \`/stamp setcard\` to pick a card design for a campaign first!`,
+          content: `👑 **${user.username}** hasn't set a card for **${camp.label}** yet. They need to run \`/stamp setcard\` and select **${camp.label}**.`,
           flags: 64,
         });
       }
 
-      // Show each campaign card
-      await interaction.deferReply();
-      let first = true;
-      for (const camp of campaignCounts) {
-        const campCard = await getCampaignCard(guildId, user.id, camp.id);
-        if (!campCard || !STAMP_CARDS[campCard.card_id]) continue;
-        const cardId = campCard.card_id;
-        const stampId = campCard.stamp_id || "gold_stamp";
-        const count = Math.min(Number(camp.total), STAMP_GOAL);
-        const buffer = await renderStampCard(cardId, count, stampId);
-        const payload = {
-          content: `👑 **${user.username}** — **${camp.label}** — **${STAMP_CARDS[cardId].name}** — **${count}/${STAMP_GOAL}**`,
-          files: [{ attachment: buffer, name: `${camp.label.replace(/\s+/g,'_')}.png` }],
-        };
-        if (first) { await interaction.editReply(payload); first = false; }
-        else { await interaction.followUp(payload); }
-      }
-      if (first) await interaction.editReply({ content: `👑 **${user.username}** has no stamp cards set up yet.` });
-      return;
+      const campStamps = await getCampaignStampsForUser(guildId, user.id);
+      const campData = campStamps.find(r => r.id === camp.id);
+      const count = Math.min(Number(campData?.total || 0), STAMP_GOAL);
+      const buffer = await renderStampCard(campCard.card_id, count, campCard.stamp_id || "gold_stamp");
+
+      return interaction.reply({
+        content: `👑 **${user.username}** — **${camp.label}** — **${STAMP_CARDS[campCard.card_id].name}** — **${count}/${STAMP_GOAL}**`,
+        files: [{ attachment: buffer, name: "stamp-card.png" }],
+      });
     }
 
     // ===== RESETALL =====
@@ -1428,8 +1433,16 @@ client.on("interactionCreate", async (interaction) => {
 
         // Get card from user_campaign_cards for this campaign
         const campCard = await getCampaignCard(guildId, targetUser.id, campaignId);
-        if (!campCard) return interaction.editReply(`<:wrong:1510784077794377838> **${targetUser.username}** hasn't set a card for **${campaignLabel}** yet. Ask them to run \`/stamp setcard\` and select the **${campaignLabel}** campaign.`);
-        cardId = campCard.card_id;
+        if (campCard && STAMP_CARDS[campCard.card_id]) {
+          cardId = campCard.card_id;
+        } else {
+          // Fallback to default user_cards
+          const savedCard = await getCard(guildId, targetUser.id);
+          cardId = savedCard?.card_id || savedCard;
+          if (!cardId || !STAMP_CARDS[cardId]) {
+            return interaction.editReply(`<:wrong:1510784077794377838> **${targetUser.username}** hasn't set a card for **${campaignLabel}** yet. Ask them to run \`/stamp setcard\` and select the **${campaignLabel}** campaign.`);
+          }
+        }
       } else if (sub === "remove") {
         const campaignName = interaction.options.getString("campaign", true);
         const camp = await pool.query(`SELECT * FROM campaigns WHERE guild_id=$1 AND name=$2`, [guildId, campaignName]);
@@ -1468,12 +1481,47 @@ client.on("interactionCreate", async (interaction) => {
       }
 
       const amount = interaction.options.getInteger("amount") || 1;
-      const overrideStamp = interaction.options.getString("design");
+      const overrideStamp = interaction.options.getString("stamp_design");
       const rewardRoleId = await resolveRewardRole(guildId);
 
-      // Get stamp — from campaign card preference or staff stamp
-      const campCard = sub === "add" ? await getCampaignCard(guildId, targetUser.id, campaignId) : null;
-      const stampId = overrideStamp || campCard?.stamp_id || await getStaffStamp(guildId, interaction.user.id);
+      // Get existing campaign card to check if stamp is already set
+      const campCardForStamp = sub === "add" ? await getCampaignCard(guildId, targetUser.id, campaignId) : null;
+      const savedCardInfo = await getCard(guildId, targetUser.id);
+      const existingStamp = campCardForStamp?.stamp_id || savedCardInfo?.stamp_id;
+
+      // First stamp requires stamp_design to be selected
+      const currentCheck = await getCount(guildId, targetUser.id, cardId, campaignId);
+      if (sub === "add" && currentCheck === 0 && !overrideStamp && !existingStamp) {
+        return interaction.editReply(`<:wrong:1510784077794377838> This is **${targetUser.username}'s** first stamp for **${campaignLabel}** — please select a **stamp design** from the dropdown.`);
+      }
+
+      // If stamp_design selected, save it permanently to their campaign card
+      const stampId = overrideStamp || existingStamp || await getStaffStamp(guildId, interaction.user.id);
+      if (overrideStamp && campaignId) {
+        if (campCardForStamp) {
+          await pool.query(
+            `UPDATE user_campaign_cards SET stamp_id=$1 WHERE guild_id=$2 AND user_id=$3 AND campaign_id=$4`,
+            [overrideStamp, guildId, targetUser.id, campaignId]
+          );
+        } else {
+          await setCampaignCard(guildId, targetUser.id, campaignId, cardId, overrideStamp);
+        }
+      }
+
+      // Migrate legacy stamps (NULL campaign_id) to this campaign on first use
+      if (sub === "add" && campaignId) {
+        const legacyCount = await pool.query(
+          `SELECT count FROM stamps WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND campaign_id IS NULL`,
+          [guildId, targetUser.id, cardId]
+        );
+        if (legacyCount.rows[0]?.count > 0) {
+          // Move legacy count to this campaign
+          await pool.query(
+            `UPDATE stamps SET campaign_id=$4 WHERE guild_id=$1 AND user_id=$2 AND card_id=$3 AND campaign_id IS NULL`,
+            [guildId, targetUser.id, cardId, campaignId]
+          );
+        }
+      }
 
       const current = await getCount(guildId, targetUser.id, cardId, campaignId);
       const next = sub === "add" ? current + amount : Math.max(0, current - amount);
