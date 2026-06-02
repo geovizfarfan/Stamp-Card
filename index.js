@@ -94,7 +94,7 @@ const STAMPS = {
   pride_stamp:      { name: "Pride",                    file: "pride_stamp.png" },
   pup_stamp:        { name: "Pup",                      file: "pup_stamp.png" },
   trans_stamp:      { name: "Trans",                    file: "trans_stamp.png" },
-  kirby_stamp:      { name: "Kirby",                    file: "Kirby.png" },
+  kirby_stamp:      { name: "Kirby",                    file: "Kirby_stamp.png" },
   kirby_star:       { name: "Kirby Star",               file: "Kirby_star.png" },
   kirby_fuscia:     { name: "Kirby Fuscia",             file: "fucsia_kirby.png" },
   kirby_sleepy:     { name: "Kirby Sleepy",             file: "sleepy_kirby.png" },
