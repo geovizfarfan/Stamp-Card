@@ -1308,9 +1308,8 @@ client.on("interactionCreate", async (interaction) => {
         });
       }
 
-      const campStamps = await getCampaignStampsForUser(guildId, user.id);
-      const campData = campStamps.find(r => r.id === camp.id);
-      const count = Math.min(Number(campData?.total || 0), STAMP_GOAL);
+      const campStamps = await getCount(guildId, user.id, campCard.card_id, camp.id);
+      const count = Math.min(campStamps, STAMP_GOAL);
       const buffer = await renderStampCard(campCard.card_id, count, campCard.stamp_id || "gold_stamp");
 
       return interaction.reply({
