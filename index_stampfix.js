@@ -80,11 +80,24 @@ const STAMPS = {
   black_stamp:      { name: "Black",                    file: "Black_Stamp.png" },
   board_princess:   { name: "Board Princess",           file: "Board_Princess_Stamp.png" },
   gold_stamp:       { name: "Gold",                     file: "Gold_Stamp.png" },
-  pink_stamp:       { name: "Pink",                     file: "Pink_Stamp.png" },
-  purple_stamp:     { name: "Purple",                   file: "Purple_Stamp.png" },
-  silver_stamp:     { name: "Silver",                   file: "Silver_Stamp.png" },
+  pink_stamp:       { name: "Pink Crown",               file: "Pink_Stamp.png" },
+  purple_stamp:     { name: "Purple Crown",             file: "Purple_Stamp.png" },
+  silver_stamp:     { name: "Silver Crown",             file: "Silver_Stamp.png" },
   verified_gold:    { name: "Verified Gold",            file: "Verified_Gold.png" },
   verified_black:   { name: "Verified Black",           file: "Verified_Black_Stamp.png" },
+  daisy_stamp:      { name: "Daisy",                    file: "daisy_stamp.png" },
+  fall_stamp:       { name: "Fall Pumpkin",             file: "fall_stamp.png" },
+  flower_stamp:     { name: "Flower Crown",             file: "flower_stamp.png" },
+  fuscia_stamp:     { name: "Fuscia",                   file: "fuscia_stamp.png" },
+  les_stamp:        { name: "Lesbian",                  file: "les_stamp.png" },
+  meow_stamp:       { name: "Meow",                     file: "meow_stamp.png" },
+  pride_stamp:      { name: "Pride",                    file: "pride_stamp.png" },
+  pup_stamp:        { name: "Pup",                      file: "pup_stamp.png" },
+  trans_stamp:      { name: "Trans",                    file: "trans_stamp.png" },
+  kirby_stamp:      { name: "Kirby Heart",              file: "Kirby_stamp.png" },
+  kirby_star:       { name: "Kirby Star",               file: "Kirby_star.png" },
+  kirby_fuscia:     { name: "Kirby Fuscia",             file: "fucsia_kirby.png" },
+  kirby_sleepy:     { name: "Kirby Sleepy",             file: "sleepy_kirby.png" },
 };
 
 const STAMP_CHOICES = Object.entries(STAMPS).map(([value, s]) => ({ name: s.name, value }));
@@ -611,6 +624,9 @@ const commands = [
     )
     .addSubcommand((s) =>
       s.setName("view").setDescription("View stamp progress")
+        .addStringOption((o) =>
+          o.setName("campaign").setDescription("Which campaign to view").setRequired(true).setAutocomplete(true)
+        )
         .addUserOption((o) => o.setName("user").setDescription("User (optional)"))
     )
     .addSubcommand((s) =>
@@ -626,10 +642,10 @@ const commands = [
           o.setName("card").setDescription("Search for a card design").setRequired(true).setAutocomplete(true)
         )
         .addStringOption((o) =>
-          o.setName("campaign").setDescription("Set card for a specific campaign (leave blank for default)").setAutocomplete(true)
+          o.setName("campaign").setDescription("Which campaign is this card for").setRequired(true).setAutocomplete(true)
         )
         .addStringOption((o) =>
-          o.setName("stamp").setDescription("Also set your stamp design for this campaign").addChoices(...STAMP_CHOICES)
+          o.setName("stamp").setDescription("Choose your stamp design for this campaign").setRequired(true).addChoices(...STAMP_CHOICES)
         )
         .addUserOption((o) => o.setName("user").setDescription("Set card for this user (managers only)"))
     )
@@ -877,7 +893,7 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.respond(choices);
   }
 
-  if ((sub === "add" || sub === "remove" || sub === "reassign") && focused.name === "campaign") {
+  if ((sub === "add" || sub === "remove" || sub === "reassign" || sub === "view") && focused.name === "campaign") {
     const rows = await pool.query(
       `SELECT name, label FROM campaigns WHERE guild_id=$1 AND active=TRUE ORDER BY created_at DESC LIMIT 25`,
       [interaction.guildId]
@@ -1228,7 +1244,7 @@ client.on("interactionCreate", async (interaction) => {
         const c = camp.rows[0];
         if (!c) return interaction.editReply(`<:wrong:1510784077794377838> Campaign \`${campaignName}\` not found.`);
 
-        const stampId = stampChoice || (await getCampaignCard(guildId, userId, c.id))?.stamp_id || "gold_stamp";
+        const stampId = interaction.options.getString("stamp", true);
         await setCampaignCard(guildId, userId, c.id, cardId, stampId);
 
         // Count is per campaign_id not card_id
@@ -1269,36 +1285,33 @@ client.on("interactionCreate", async (interaction) => {
     // ===== VIEW =====
     if (sub === "view") {
       const user = interaction.options.getUser("user") || interaction.user;
+      const campaignName = interaction.options.getString("campaign", true);
 
-      // Get per-campaign counts
-      const campaignCounts = await getCampaignStampsForUser(guildId, user.id);
+      // Resolve campaign
+      const campRes = await pool.query(
+        `SELECT * FROM campaigns WHERE guild_id=$1 AND name=$2`,
+        [guildId, campaignName]
+      );
+      const camp = campRes.rows[0];
+      if (!camp) return interaction.reply({ content: `<:wrong:1510784077794377838> Campaign not found.`, flags: 64 });
 
-      if (campaignCounts.length === 0) {
+      const campCard = await getCampaignCard(guildId, user.id, camp.id);
+      if (!campCard || !STAMP_CARDS[campCard.card_id]) {
         return interaction.reply({
-          content: `👑 **${user.username}** has no stamps yet. They need to run \`/stamp setcard\` to pick a card design for a campaign first!`,
+          content: `👑 **${user.username}** hasn't set a card for **${camp.label}** yet. They need to run \`/stamp setcard\` and select **${camp.label}**.`,
           flags: 64,
         });
       }
 
-      // Show each campaign card
-      await interaction.deferReply();
-      let first = true;
-      for (const camp of campaignCounts) {
-        const campCard = await getCampaignCard(guildId, user.id, camp.id);
-        if (!campCard || !STAMP_CARDS[campCard.card_id]) continue;
-        const cardId = campCard.card_id;
-        const stampId = campCard.stamp_id || "gold_stamp";
-        const count = Math.min(Number(camp.total), STAMP_GOAL);
-        const buffer = await renderStampCard(cardId, count, stampId);
-        const payload = {
-          content: `👑 **${user.username}** — **${camp.label}** — **${STAMP_CARDS[cardId].name}** — **${count}/${STAMP_GOAL}**`,
-          files: [{ attachment: buffer, name: `${camp.label.replace(/\s+/g,'_')}.png` }],
-        };
-        if (first) { await interaction.editReply(payload); first = false; }
-        else { await interaction.followUp(payload); }
-      }
-      if (first) await interaction.editReply({ content: `👑 **${user.username}** has no stamp cards set up yet.` });
-      return;
+      const campStamps = await getCampaignStampsForUser(guildId, user.id);
+      const campData = campStamps.find(r => r.id === camp.id);
+      const count = Math.min(Number(campData?.total || 0), STAMP_GOAL);
+      const buffer = await renderStampCard(campCard.card_id, count, campCard.stamp_id || "gold_stamp");
+
+      return interaction.reply({
+        content: `👑 **${user.username}** — **${camp.label}** — **${STAMP_CARDS[campCard.card_id].name}** — **${count}/${STAMP_GOAL}**`,
+        files: [{ attachment: buffer, name: "stamp-card.png" }],
+      });
     }
 
     // ===== RESETALL =====
