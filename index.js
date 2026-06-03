@@ -440,7 +440,7 @@ async function getCompletedCardById(id) {
 
 async function getHistory(guildId, userId) {
   const res = await pool.query(
-    `SELECT id, card_id, card_number, completed_at, claimed FROM completed_cards WHERE guild_id=$1 AND user_id=$2 ORDER BY completed_at DESC`,
+    `SELECT id, card_id, card_number, completed_at, claimed, campaign_id FROM completed_cards WHERE guild_id=$1 AND user_id=$2 ORDER BY completed_at DESC`,
     [guildId, userId]
   );
   return res.rows;
@@ -1089,7 +1089,25 @@ client.on("interactionCreate", async (interaction) => {
       if (!(await canManage(interaction))) return interaction.reply({ content: "<:wrong:1510784077794377838> No permission.", flags: 64 });
       await interaction.deferReply({ flags: 64 });
 
-      // Fix completed_cards with no campaign_id
+      // Check what's there
+      const check = await pool.query(
+        `SELECT COUNT(*) as total, COUNT(campaign_id) as with_campaign FROM completed_cards WHERE guild_id=$1`,
+        [guildId]
+      );
+      const campaigns = await pool.query(
+        `SELECT id, name, label FROM campaigns WHERE guild_id=$1 ORDER BY created_at DESC`,
+        [guildId]
+      );
+
+      const nullCount = parseInt(check.rows[0].total) - parseInt(check.rows[0].with_campaign);
+
+      if (nullCount === 0) {
+        return interaction.editReply(
+          `✅ All **${check.rows[0].total}** completed cards already have campaigns assigned!\n` +
+          `Available campaigns: ${campaigns.rows.map(c => `**${c.label}** (id:${c.id})`).join(", ")}`
+        );
+      }
+
       const res = await pool.query(`
         UPDATE completed_cards SET campaign_id = (
           SELECT id FROM campaigns 
