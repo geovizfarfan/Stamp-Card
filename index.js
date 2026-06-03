@@ -1249,14 +1249,24 @@ client.on("interactionCreate", async (interaction) => {
         const c = camp.rows[0];
         if (!c) return interaction.editReply(`<:wrong:1510784077794377838> Campaign \`${campaignName}\` not found.`);
 
-        const stampId = (await getCampaignCard(guildId, userId, c.id))?.stamp_id || "gold_stamp";
+        const existingCampCard = await getCampaignCard(guildId, userId, c.id);
+        const stampId = existingCampCard?.stamp_id || "gold_stamp";
+
+        // Transfer stamps from old card to new card if card changed
+        if (existingCampCard && existingCampCard.card_id !== cardId) {
+          const oldCount = await getCount(guildId, userId, existingCampCard.card_id, c.id);
+          if (oldCount > 0) {
+            await deleteCount(guildId, userId, existingCampCard.card_id, c.id);
+            await upsertCount(guildId, userId, cardId, oldCount, c.id);
+          }
+        }
+
         await setCampaignCard(guildId, userId, c.id, cardId, stampId);
 
-        // Count is per campaign_id not card_id
-        const count = await getCount(guildId, userId, c.id, c.id);
+        const count = await getCount(guildId, userId, cardId, c.id);
         const previewBuffer = await renderStampCard(cardId, Math.max(count, 1), stampId);
         return interaction.editReply({
-          content: `<:checkmark:1510784068487479318> ${isOther ? `**${targetUser.username}'s**` : "Your"} card for **${c.label}** is now **${STAMP_CARDS[cardId].name}**!`,
+          content: `<:checkmark:1510784068487479318> ${isOther ? `**${targetUser.username}'s**` : "Your"} card for **${c.label}** is now **${STAMP_CARDS[cardId].name}**!${count > 0 ? ` (${count} stamps carried over)` : ""}`,
           files: [{ attachment: previewBuffer, name: "card-preview.png" }],
         });
       }
@@ -1308,8 +1318,7 @@ client.on("interactionCreate", async (interaction) => {
         });
       }
 
-      const campStamps = await getCount(guildId, user.id, campCard.card_id, camp.id);
-      const count = Math.min(campStamps, STAMP_GOAL);
+      const count = Math.min(await getCount(guildId, user.id, campCard.card_id, camp.id), STAMP_GOAL);
       const buffer = await renderStampCard(campCard.card_id, count, campCard.stamp_id || "gold_stamp");
 
       return interaction.reply({
