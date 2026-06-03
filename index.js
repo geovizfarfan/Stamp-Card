@@ -1094,7 +1094,6 @@ client.on("interactionCreate", async (interaction) => {
         UPDATE completed_cards SET campaign_id = (
           SELECT id FROM campaigns 
           WHERE guild_id = completed_cards.guild_id 
-          AND active = TRUE 
           ORDER BY created_at DESC LIMIT 1
         )
         WHERE guild_id = $1 AND campaign_id IS NULL
