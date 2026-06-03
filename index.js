@@ -638,6 +638,9 @@ const commands = [
         )
     )
     .addSubcommand((s) =>
+      s.setName("fixcampaigns").setDescription("Fix completed cards with missing campaign (managers only)")
+    )
+    .addSubcommand((s) =>
       s.setName("leaderboard").setDescription("View the top stamp holders")
     )
     .addSubcommand((s) =>
@@ -718,7 +721,8 @@ const commands = [
     .addSubcommand((s) =>
       s.setName("deletecompleted").setDescription("Remove a completed card from a user's history (managers only)")
         .addUserOption((o) => o.setName("user").setDescription("Member").setRequired(true))
-        .addIntegerOption((o) => o.setName("card").setDescription("Card number to delete").setRequired(true).setMinValue(1))
+        .addIntegerOption((o) => o.setName("card").setDescription("Card number to delete (check /stamp history)").setRequired(true).setMinValue(1))
+        .addStringOption((o) => o.setName("reason").setDescription("Reason for removal (optional)"))
     )
     .addSubcommand((s) =>
       s.setName("resetall").setDescription("Reset ALL stamp cards in this server (admin/owner only)")
@@ -1080,7 +1084,25 @@ client.on("interactionCreate", async (interaction) => {
       return interaction.editReply({ content: `✅ Announcement sent!\n> **Delivered:** ${sent} members\n> **Failed (DMs closed):** ${failed} members` });
     }
 
-    // ===== LEADERBOARD =====
+    // ===== FIXCAMPAIGNS =====
+    if (sub === "fixcampaigns") {
+      if (!(await canManage(interaction))) return interaction.reply({ content: "<:wrong:1510784077794377838> No permission.", flags: 64 });
+      await interaction.deferReply({ flags: 64 });
+
+      // Fix completed_cards with no campaign_id
+      const res = await pool.query(`
+        UPDATE completed_cards SET campaign_id = (
+          SELECT id FROM campaigns 
+          WHERE guild_id = completed_cards.guild_id 
+          AND active = TRUE 
+          ORDER BY created_at DESC LIMIT 1
+        )
+        WHERE guild_id = $1 AND campaign_id IS NULL
+        RETURNING id
+      `, [guildId]);
+
+      return interaction.editReply(`<:checkmark:1510784068487479318> Fixed **${res.rowCount}** completed cards — campaign assigned!`);
+    }
     if (sub === "leaderboard") {
       const rows = await getLeaderboard(guildId);
       if (!rows.length) return interaction.reply({ content: "<:wrong:1510784077794377838> No stamps have been issued yet.", flags: 64 });
@@ -1158,18 +1180,23 @@ client.on("interactionCreate", async (interaction) => {
       if (!(await canManage(interaction))) return interaction.reply({ content: "❌ You don't have permission to do this.", flags: 64 });
       const targetUser = interaction.options.getUser("user", true);
       const cardNumber = interaction.options.getInteger("card", true);
+      const reason = interaction.options.getString("reason") || "No reason provided";
 
       const res = await pool.query(
         'SELECT * FROM completed_cards WHERE guild_id=$1 AND user_id=$2 AND card_number=$3',
         [guildId, targetUser.id, cardNumber]
       );
       const record = res.rows[0];
-      if (!record) return interaction.reply({ content: `❌ Card #${cardNumber} not found for **${targetUser.username}**.`, flags: 64 });
+      if (!record) return interaction.reply({ content: `<:wrong:1510784077794377838> Card #${cardNumber} not found for **${targetUser.username}**. Check their history with \`/stamp history\`.`, flags: 64 });
+
+      const cardName = STAMP_CARDS[record.card_id]?.name || record.card_id;
+      const campRes = record.campaign_id ? await pool.query("SELECT label FROM campaigns WHERE id=$1", [record.campaign_id]) : null;
+      const campName = campRes?.rows[0]?.label || "No Campaign";
 
       await pool.query('DELETE FROM completed_cards WHERE id=$1', [record.id]);
 
       return interaction.reply({
-        content: `🗑️ **Card #${cardNumber}** has been removed from **${targetUser.username}'s** history.`,
+        content: `🗑️ **Card #${cardNumber}** removed from **${targetUser.username}'s** history.\n<:BULLET:1488760457073524947> **Card:** ${cardName}\n<:BULLET:1488760457073524947> **Campaign:** ${campName}\n<:receipts:1488760952924143616> **Reason:** ${reason}`,
         allowedMentions: { users: [] },
       });
     }
